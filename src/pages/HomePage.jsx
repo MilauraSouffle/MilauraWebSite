@@ -8,6 +8,7 @@ import SocialWall from '@/components/SocialWall';
 import ProductsList from '@/components/ProductsList';
 import { Button } from '@/components/ui/button';
 import Seo from '@/components/Seo';
+import CollectionsCarousel from '@/components/CollectionsCarousel';
 
 /* -------------------- petit effet de texte sur les boutons -------------------- */
 const AnimatedButtonText = ({ text }) => {
@@ -43,8 +44,8 @@ const NouveautesSection = () => {
   const buttonText = 'Voir toutes les nouveautés';
 
   return (
-    // marges normales pour bien s’enchaîner avec la section AdventCalendar
-    <section className="pt-14 md:pt-16 pb-20 md:pb-24 bg-[#FBF9F4]">
+    // marges resserrées pour enchaînement harmonieux
+    <section className="pt-10 md:pt-12 pb-14 md:pb-16 bg-[#FBF9F4]">
       <div className="container mx-auto px-4 text-center">
         <motion.h2
           className="text-5xl font-script font-bold text-gradient-gold-warm mb-4"
@@ -57,7 +58,7 @@ const NouveautesSection = () => {
         </motion.h2>
 
         <motion.p
-          className="text-lg text-gray-600 max-w-2xl mx-auto mb-12"
+          className="text-lg text-gray-600 max-w-2xl mx-auto mb-8"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
@@ -139,6 +140,8 @@ const HomePage = () => {
         className="bg-[#FBF9F4]"
       >
         <Hero />
+        {/* Nos Collections en carrousel */}
+        <CollectionsCarousel />
         {/* section calendriers optimisée (fond parallax + pas de carré blanc) */}
         <AdventCalendar />
         {/* section nouveautés sans chevauchement */}
