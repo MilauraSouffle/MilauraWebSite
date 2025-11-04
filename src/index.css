@@ -1,0 +1,243 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
+  }
+  .font-script {
+    font-family: 'Dancing Script', cursive;
+  }
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500;
+}
+
+.text-gradient-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600;
+}
+
+.text-gradient-gold-warm {
+    background: linear-gradient(120deg, #D4AF37, #BFA57C, #A48B65);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-effect {
+  @apply bg-white/50 backdrop-blur-lg border border-white/20;
+}
+
+.shimmer-badge {
+  background: linear-gradient(110deg, #E6D4A7 8%, #BFA57C 18%, #E6D4A7 33%);
+  background-size: 200% 100%;
+  animation: shimmer-badge-anim 4s linear infinite;
+}
+
+@keyframes shimmer-badge-anim {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.sparkle-badge::before, .sparkle-badge::after {
+  content: '✨';
+  position: absolute;
+  opacity: 0;
+  animation: sparkle-anim 3s infinite;
+}
+.sparkle-badge::before { top: -10px; left: 10%; animation-delay: 0.5s; }
+.sparkle-badge::after { bottom: -5px; right: 15%; animation-delay: 1.5s; }
+
+@keyframes sparkle-anim {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  25%, 75% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0; transform: scale(0.5); }
+}
+
+.btn-golden-animated {
+  @apply bg-gradient-to-r from-[#C3A46D] to-[#B18E48] text-black font-bold rounded-full transition-all duration-300 ease-in-out;
+  @apply hover:shadow-lg hover:shadow-[#C3A46D]/50 hover:scale-105;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-golden-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: all 650ms;
+}
+
+.btn-golden-animated:hover::before {
+  left: 100%;
+}
+
+.snake-border-animation {
+  position: relative;
+  background-color: rgba(251, 249, 244, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: 1.5rem;
+  padding: 2px;
+}
+
+.snake-border-animation::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 1.5rem;
+  border: 2px solid transparent;
+  background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: snake-anim 4s linear infinite;
+}
+
+@keyframes snake-anim {
+  0%, 100% {
+    clip-path: inset(0 100% 98% 0);
+  }
+  25% {
+    clip-path: inset(0 0 98% 0);
+  }
+  50% {
+    clip-path: inset(0 0 0 0);
+  }
+  75% {
+    clip-path: inset(98% 0 0 0);
+  }
+  99% {
+    clip-path: inset(98% 100% 0 0);
+  }
+}
+
+.header-content-wrapper {
+  background-color: rgba(251, 249, 244, 0.0); /* Make inner content transparent to see the frame bg */
+  border-radius: 1.4rem; /* Slightly smaller than frame to prevent overlap */
+  position: relative;
+  z-index: 1;
+}
+
+.golden-frame {
+  position: relative;
+  padding: 2px;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #e6d4a7, #bfa57c);
+  transition: all 0.3s ease-in-out;
+}
+
+.golden-frame:hover {
+  background: linear-gradient(135deg, #f0e6c8, #d4af37);
+  box-shadow: 0 10px 30px -10px rgba(191, 165, 124, 0.6);
+}
+
+.golden-frame > div {
+  border-radius: 1.4rem;
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-anim 5s infinite linear;
+}
+
+@keyframes shimmer-anim {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.hover-underline-animation {
+  display: inline-block;
+  position: relative;
+  color: #4a5568; /* default text color */
+}
+
+.hover-underline-animation:hover {
+  color: #BFA57C;
+}
+
+.hover-underline-animation::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -4px;
+  left: 0;
+  background: linear-gradient(to right, #D4AF37, #A48B65);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.hover-underline-animation:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
