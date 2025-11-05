@@ -103,6 +103,31 @@
     animation: snake-anim 4s linear infinite;
     z-index: 0;
   }
+
+  .golden-frame {
+    position: relative;
+    border-radius: 1.5rem; /* Match the header's rounded corners */
+    padding: 2px; /* Space for the border */
+    background: transparent; /* Default background */
+  }
+
+  .golden-frame::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit; 
+    padding: 2px; 
+    background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box; /* Golden gradient */
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 0;
+  }
 }
 
 .text-gradient-gold-warm {

@@ -159,7 +159,7 @@ const ProductCard = ({ product, index, backContext }) => {
       whileHover={{ y: -5 }}
       className="golden-frame group"
     >
-      <div className="bg-[#FBF9F4] rounded-2xl overflow-hidden h-full flex flex-col">
+      <div className="bg-[#FBF9F4] rounded-[1.3rem] overflow-hidden h-full flex flex-col"> {/* Adjusted rounded corners to fit inside the 1.5rem golden frame */}
         <Link to={`/product/${product.id}`} state={backContext} className="block">
           <div className="aspect-square bg-[#FBF9F4]/50 flex items-center justify-center relative overflow-hidden p-8">
             <img
