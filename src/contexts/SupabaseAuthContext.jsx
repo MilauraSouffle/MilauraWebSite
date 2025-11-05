@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
   }, [handleSession]);
 
   const signUp = useCallback(async (email, password) => {
+    setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -55,18 +56,27 @@ export const AuthProvider = ({ children }) => {
         });
       }
     } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      // This case handles when a user exists but is not confirmed. Supabase returns a user object but no session.
+      // For a better UX, we can treat this as "user already exists".
       toast({
         variant: "destructive",
         title: "Utilisateur existant",
-        description: "Cette adresse e-mail est déjà enregistrée. Veuillez vous connecter.",
+        description: "Un compte avec cet e-mail existe déjà. Veuillez vérifier vos e-mails pour confirmer votre compte ou connectez-vous.",
       });
-      return { error: { message: "User already exists" } };
+       setLoading(false);
+      return { data, error: { message: "User already exists" } };
+    } else if (data.user) {
+        toast({
+            title: "🎉 Compte créé !",
+            description: "Bienvenue ! Un email de confirmation vous a été envoyé.",
+        });
     }
-
+    setLoading(false);
     return { data, error };
   }, [toast]);
 
   const signIn = useCallback(async (email, password) => {
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -78,12 +88,18 @@ export const AuthProvider = ({ children }) => {
         title: "Échec de la connexion",
         description: "Email ou mot de passe incorrect.",
       });
+    } else {
+        toast({
+            title: "Connexion réussie !",
+            description: "Heureux de vous revoir.",
+        });
     }
-
+    setLoading(false);
     return { error };
   }, [toast]);
 
   const signOut = useCallback(async () => {
+    setLoading(true);
     const { error } = await supabase.auth.signOut();
 
     if (error) {
@@ -92,8 +108,13 @@ export const AuthProvider = ({ children }) => {
         title: "Échec de la déconnexion",
         description: error.message || "Une erreur est survenue.",
       });
+    } else {
+        toast({
+            title: "Déconnexion",
+            description: "À bientôt !",
+        });
     }
-
+    setLoading(false);
     return { error };
   }, [toast]);
 

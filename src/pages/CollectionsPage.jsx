@@ -8,10 +8,10 @@ import { getProducts } from "@/api/EcommerceApi";
 const CATEGORY_REGISTRY = {
   pcol_01K88QVKKZN29HYFBYXRAV0106: { name: "Bijoux énergétiques", slug: "bijoux-energetiques" },
   pcol_01K88X47XDD86DGRCST06ZRFP4: { name: "Bougie émotionnelle", slug: "bougie-emotionnelle" },
-  pcol_01K88QSKEZQ9032VE7PBEWG0GH: { name: "Calendrier de l'Avent", slug: "calendrier" },
+  pcol_01K88QSKEZQ9032VE7PBEWG0GH: { name: "Calendrier de l'Avent", slug: "calendrier-de-lavent" },
   pcol_01K88QWACTFF883B79X179MZ28: { name: "Objets de lithothérapie", slug: "objets-de-lithotherapie" },
-  pcol_01K88QVYP8QVQ95HSSKMD9KHZC: { name: "Pierres & Minéraux", slug: "pierres-et-mineraux" },
-  pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-et-bien-etre" },
+  pcol_01K88QVYP8QVQ95HSSKMD9KHZC: { name: "Pierres & Minéraux", slug: "pierres-mineraux" },
+  pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-bien-etre" },
 };
 
 /* ------------------------------ helpers & utils ------------------------------ */
@@ -237,7 +237,7 @@ const CollectionsPage = () => {
 
   const title = "Nos Collections";
   const description =
-    "Découvrez nos univers : bougies émotionnelles, bijoux énergétiques, pierres naturelles, rituels & bien-être… chaque catégorie vous ouvre une nouvelle porte émotionnelle.";
+    "Découvrez nos univers : bougies émotionnelles, bijoux énergétiques, pierres naturelles, rituels & bien-être… chaque catégorie vous ouvre une nouvelle porte vers vos émotions.";
 
   const gridItems = useMemo(() => items || [], [items]);
 

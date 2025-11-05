@@ -8,6 +8,7 @@ import AIAssistant from '@/components/AIAssistant';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import { useCart } from '@/hooks/useCart';
 import ContactBubble from '@/components/ContactBubble';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 // Pages
 import HomePage from '@/pages/HomePage';
@@ -25,17 +26,11 @@ import BlogPage from '@/pages/BlogPage';
 import ArticlePage from '@/pages/ArticlePage';
 import SubscriptionPage from '@/pages/SubscriptionPage';
 import AdventCategoryPage from '@/pages/AdventCategoryPage';
+import AuthPage from '@/pages/AuthPage';
 
-/* ------------------------------------------------------------------ */
-/* Gestionnaire de scroll global                                      */
-/* - Force le retour en haut à chaque changement de route             */
-/* - Gère les ancres (#id) avec un offset du header                   */
-/* - Désactive la “restauration historique” du navigateur             */
-/* ------------------------------------------------------------------ */
 function ScrollManager() {
   const { pathname, hash } = useLocation();
 
-  // 1) empêcher le navigateur de restaurer une position aléatoire
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       try {
@@ -44,13 +39,10 @@ function ScrollManager() {
     }
   }, []);
 
-  // 2) à chaque changement de page, remonter en haut
   useEffect(() => {
-    // on “reset” d’abord, puis on traite une éventuelle ancre juste après
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
 
-  // 3) si une ancre est présente, on scrolle en douceur avec offset du header
   useEffect(() => {
     if (!hash) return;
 
@@ -61,7 +53,7 @@ function ScrollManager() {
       const header = document.getElementById('site-header');
       const offset = header ? header.getBoundingClientRect().height : 0;
       const top =
-        window.scrollY + el.getBoundingClientRect().top - offset - 12; // petit margin
+        window.scrollY + el.getBoundingClientRect().top - offset - 12;
 
       window.scrollTo({
         top: Math.max(0, top),
@@ -70,7 +62,6 @@ function ScrollManager() {
       });
     };
 
-    // attendre un raf pour être sûr que le DOM est peint
     requestAnimationFrame(scrollToHash);
   }, [pathname, hash]);
 
@@ -81,28 +72,26 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const location = useLocation();
   const { cartItems } = useCart();
+  const { user, loading } = useAuth();
 
   const shouldShowHeaderFooter = location.pathname !== '/lien';
 
   return (
     <>
       <div className="min-h-screen bg-[#FBF9F4] overflow-x-hidden">
-        {/* Gestion globale du scroll (retour haut + ancres) */}
         <ScrollManager />
 
         {shouldShowHeaderFooter && (
-          <div id="site-header" className="fixed top-0 left-0 w-full z-50">
+          <div id="site-header" className="fixed top-0 left-0 w-full z-40">
             <AnnouncementBar />
-            <div className="p-2 sm:p-3">
-              <Header
-                onCartClick={() => setIsCartOpen(true)}
-                cartItemCount={cartItems.length}
-              />
-            </div>
+            <Header
+              onCartClick={() => setIsCartOpen(true)}
+              cartItemCount={cartItems.length}
+            />
           </div>
         )}
 
-        <div className={`${shouldShowHeaderFooter ? 'pt-28 md:pt-32' : ''}`}>
+        <div className={`${shouldShowHeaderFooter ? 'pt-36' : ''}`}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage />} />
@@ -114,7 +103,8 @@ function App() {
               <Route path="/collections/:categorySlug" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/boutique" element={<Navigate to="/nos-collections" replace />} />
-              <Route path="/profil" element={<EmotionalDashboardPage />} />
+              <Route path="/profil" element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />} />
+              <Route path="/connexion" element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />} />
               <Route path="/lien" element={<LinkInBioPage />} />
               <Route path="/success" element={<SuccessPage />} />
               <Route path="/newsletter" element={<Navigate to="/conseils-energie" replace />} />

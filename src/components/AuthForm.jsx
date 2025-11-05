@@ -1,35 +1,24 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 
 const AuthForm = () => {
-    const { signIn, signUp } = useAuth();
-    const { toast } = useToast();
+    const { signIn, signUp, loading } = useAuth();
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         if (isSignUp) {
-            const { error } = await signUp(email, password);
-            if (!error) {
-                toast({
-                    title: "🎉 Compte créé !",
-                    description: "Bienvenue ! Vous êtes maintenant connecté(e).",
-                });
-            }
+            await signUp(email, password);
         } else {
             await signIn(email, password);
         }
-        setLoading(false);
     };
 
     return (
@@ -76,7 +65,7 @@ const AuthForm = () => {
             </form>
 
             <div className="mt-6 text-center">
-                <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-gray-600 hover:text-black transition-colors">
+                <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-gray-600 hover:text-black transition-colors" disabled={loading}>
                     {isSignUp ? 'Vous avez déjà un compte ? Connectez-vous.' : "Pas encore de compte ? Inscrivez-vous."}
                 </button>
             </div>

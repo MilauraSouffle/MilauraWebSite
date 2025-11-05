@@ -6,10 +6,10 @@ import { getProducts } from "@/api/EcommerceApi";
 const CATEGORY_REGISTRY = {
   pcol_01K88QVKKZN29HYFBYXRAV0106: { name: "Bijoux énergétiques", slug: "bijoux-energetiques" },
   pcol_01K88X47XDD86DGRCST06ZRFP4: { name: "Bougie émotionnelle", slug: "bougie-emotionnelle" },
-  pcol_01K88QSKEZQ9032VE7PBEWG0GH: { name: "Calendrier de l'Avent", slug: "calendrier" },
+  pcol_01K88QSKEZQ9032VE7PBEWG0GH: { name: "Calendrier de l'Avent", slug: "calendrier-de-lavent" },
   pcol_01K88QWACTFF883B79X179MZ28: { name: "Objets de lithothérapie", slug: "objets-de-lithotherapie" },
-  pcol_01K88QVYP8QVQ95HSSKMD9KHZC: { name: "Pierres & Minéraux", slug: "pierres-et-mineraux" },
-  pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-et-bien-etre" },
+  pcol_01K88QVYP8QVQ95HSSKMD9KHZC: { name: "Pierres & Minéraux", slug: "pierres-mineraux" },
+  pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-bien-etre" },
 };
 
 const deaccent = (s = "") =>
@@ -132,6 +132,7 @@ export default function CollectionsCarousel() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
+  const [current, setCurrent] = useState(0);           // ← index actif (mobile)
   const scrollerRef = useRef(null);
 
   useEffect(() => {
@@ -152,11 +153,35 @@ export default function CollectionsCarousel() {
 
   const list = useMemo(() => items || [], [items]);
 
+  // Détection de la “slide” courante sur mobile
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const handler = () => {
+      const firstCard = el.querySelector('.snap-start');
+      const cardW = firstCard ? firstCard.getBoundingClientRect().width : Math.max(280, el.clientWidth * 0.8);
+      const gap = 24; // gap-6
+      const idx = Math.round(el.scrollLeft / (cardW + gap));
+      setCurrent(Math.max(0, Math.min(idx, list.length - 1)));
+    };
+
+    el.addEventListener('scroll', handler, { passive: true });
+    window.addEventListener('resize', handler);
+    handler();
+    return () => {
+      el.removeEventListener('scroll', handler);
+      window.removeEventListener('resize', handler);
+    };
+  }, [list.length]);
+
   const scrollByCards = (dir = 1) => {
     const el = scrollerRef.current;
     if (!el) return;
-    const cardWidth = Math.min(360, Math.max(280, el.clientWidth / 3));
-    el.scrollBy({ left: dir * (cardWidth * 2.5), behavior: "smooth" });
+    const firstCard = el.querySelector('.snap-start');
+    const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : Math.min(360, Math.max(280, el.clientWidth / 3));
+    const gap = 24;
+    el.scrollBy({ left: dir * (cardWidth + gap) * 2.5, behavior: "smooth" });
   };
 
   return (
@@ -181,42 +206,56 @@ export default function CollectionsCarousel() {
         {loading ? (
           <div className="text-center text-gray-400 py-12">Chargement…</div>
         ) : (
-          <div
-            className="relative"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-          >
-            {/* Boutons desktop (cachés mobile, visibles en transparence sur ordi) */}
-            <button
-              type="button"
-              aria-label="Précédent"
-              onClick={() => scrollByCards(-1)}
-              className={`hidden md:flex items-center justify-center absolute left-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              aria-label="Suivant"
-              onClick={() => scrollByCards(1)}
-              className={`hidden md:flex items-center justify-center absolute right-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
-            >
-              ›
-            </button>
-
-            {/* Scroller */}
+          <>
             <div
-              ref={scrollerRef}
-              className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 pr-2"
-              style={{ scrollbarWidth: "none" }}
+              className="relative"
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
             >
-              {list.map((it) => (
-                <div key={it.id} className="snap-start shrink-0 min-w-[280px] sm:min-w-[300px] lg:min-w-[360px]">
-                  <Card item={it} />
-                </div>
-              ))}
+              {/* Boutons desktop */}
+              <button
+                type="button"
+                aria-label="Précédent"
+                onClick={() => scrollByCards(-1)}
+                className={`hidden md:flex items-center justify-center absolute left-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                aria-label="Suivant"
+                onClick={() => scrollByCards(1)}
+                className={`hidden md:flex items-center justify-center absolute right-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
+              >
+                ›
+              </button>
+
+              {/* Scroller */}
+              <div
+                ref={scrollerRef}
+                className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 pr-2"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {list.map((it) => (
+                  <div key={it.id} className="snap-start shrink-0 min-w-[280px] sm:min-w-[300px] lg:min-w-[360px]">
+                    <Card item={it} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Dots d’indication – mobile uniquement */}
+            {list.length > 1 && (
+              <div className="md:hidden flex justify-center gap-2 mt-3">
+                {list.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${i === current ? "bg-gray-800" : "bg-gray-300"}`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
