@@ -27,7 +27,7 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
- 
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -52,48 +52,58 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
     font-family: 'Poppins', sans-serif;
   }
-  .font-script {
-    font-family: 'Dancing Script', cursive;
-  }
+  .font-script { font-family: 'Dancing Script', cursive; }
 }
 
 @layer components {
+  /* Capsule du header (espacement, arrondis, pas de fond autour) */
   .header-capsule {
-      @apply w-full max-w-7xl mx-auto;
+    @apply w-full max-w-7xl mx-auto;
+    background: transparent !important;
+    overflow: visible;
   }
 
+  /* Contenu capsule: plus haut, arrondis prononcés, transparence douce */
   .header-content-wrapper {
-    @apply relative z-10 rounded-[1.5rem] transition-colors duration-300;
-    background-color: rgba(251, 249, 244, 0.75); /* #FBF9F4 with opacity */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    @apply relative z-10 transition-all duration-500 ease-out;
+    border-radius: 2.5rem; /* arrondis prononcés */
+    background-color: #FBF3E0; /* opaque en haut */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    overflow: visible;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* relief léger */
   }
 
+  /* Au scroll: rester “propre” (quasi opaque), blur un peu plus fort */
+  .header-capsule.scrolled .header-content-wrapper {
+    background-color: rgba(251, 243, 224, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Cadre doré animé autour de la capsule */
   .snake-border-animation {
     position: relative;
-    border-radius: 1.5rem;
+    border-radius: 2.5rem;
     padding: 2px;
-    background: transparent;
+    background: transparent !important;
     transition: opacity 0.3s ease-in-out;
     opacity: 1;
+    overflow: visible;
   }
 
   .snake-border-animation::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: inherit; 
-    padding: 2px; 
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
     background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
@@ -102,25 +112,23 @@
     mask-composite: exclude;
     animation: snake-anim 4s linear infinite;
     z-index: 0;
+    pointer-events: none;
   }
 
+  /* Cadre doré générique si réutilisé ailleurs */
   .golden-frame {
     position: relative;
-    border-radius: 1.5rem; /* Match the header's rounded corners */
-    padding: 2px; /* Space for the border */
-    background: transparent; /* Default background */
+    border-radius: 1.5rem;
+    padding: 2px;
+    background: transparent;
   }
-
   .golden-frame::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: inherit; 
-    padding: 2px; 
-    background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box; /* Golden gradient */
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -130,12 +138,14 @@
   }
 }
 
+/* Texte doré */
 .text-gradient-gold-warm {
-    background: linear-gradient(120deg, #D4AF37, #BFA57C, #A48B65);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+  background: linear-gradient(120deg, #D4AF37, #BFA57C, #A48B65);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+/* Bouton doré animé */
 .btn-golden-animated {
   @apply bg-gradient-to-r from-[#C3A46D] to-[#B18E48] text-black font-bold rounded-full transition-all duration-300 ease-in-out;
   @apply hover:shadow-lg hover:shadow-[#C3A46D]/50 hover:scale-105;
@@ -143,7 +153,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .btn-golden-animated::before {
   content: '';
   position: absolute;
@@ -154,25 +163,35 @@
   background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: all 650ms;
 }
+.btn-golden-animated:hover::before { left: 100%; }
 
-.btn-golden-animated:hover::before {
-  left: 100%;
+/* Halo animé du bandeau doré (AnnouncementBar) */
+.shimmer-effect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.35) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: translateX(-100%);
+  animation: shimmer-sweep 3.2s linear infinite;
+  mix-blend-mode: screen;
+  opacity: 0.7;
 }
 
+/* Animations */
 @keyframes snake-anim {
-    0% {
-        clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-    }
-    25% {
-        clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
-    }
-    50% {
-        clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%);
-    }
-    75% {
-        clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0);
-    }
-    100% {
-        clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-    }
+  0%   { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+  25%  { clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%); }
+  50%  { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%); }
+  75%  { clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0); }
+  100% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+}
+
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

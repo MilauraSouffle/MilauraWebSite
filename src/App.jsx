@@ -33,9 +33,7 @@ function ScrollManager() {
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
-      try {
-        window.history.scrollRestoration = 'manual';
-      } catch (_) {}
+      try { window.history.scrollRestoration = 'manual'; } catch (_) {}
     }
   }, []);
 
@@ -45,23 +43,14 @@ function ScrollManager() {
 
   useEffect(() => {
     if (!hash) return;
-
     const scrollToHash = () => {
       const el = document.querySelector(hash);
       if (!el) return;
-
       const header = document.getElementById('site-header');
       const offset = header ? header.getBoundingClientRect().height : 0;
-      const top =
-        window.scrollY + el.getBoundingClientRect().top - offset - 12;
-
-      window.scrollTo({
-        top: Math.max(0, top),
-        left: 0,
-        behavior: 'smooth',
-      });
+      const top = window.scrollY + el.getBoundingClientRect().top - offset - 12;
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'smooth' });
     };
-
     requestAnimationFrame(scrollToHash);
   }, [pathname, hash]);
 
@@ -73,7 +62,6 @@ function App() {
   const location = useLocation();
   const { cartItems } = useCart();
   const { user, loading } = useAuth();
-
   const shouldShowHeaderFooter = location.pathname !== '/lien';
 
   return (
@@ -82,7 +70,10 @@ function App() {
         <ScrollManager />
 
         {shouldShowHeaderFooter && (
-          <div id="site-header" className="fixed top-0 left-0 w-full z-40">
+          <div
+            id="site-header"
+            className="fixed top-0 left-0 w-full z-50 bg-transparent"
+          >
             <AnnouncementBar />
             <Header
               onCartClick={() => setIsCartOpen(true)}
@@ -91,7 +82,8 @@ function App() {
           </div>
         )}
 
-        <div className={`${shouldShowHeaderFooter ? 'pt-36' : ''}`}>
+        {/* PLUS DE padding-top: le Hero passe sous le header (overlay), donc plus de “bande” */}
+        <div className={`${shouldShowHeaderFooter ? '' : ''}`}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage />} />
@@ -103,8 +95,14 @@ function App() {
               <Route path="/collections/:categorySlug" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/boutique" element={<Navigate to="/nos-collections" replace />} />
-              <Route path="/profil" element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />} />
-              <Route path="/connexion" element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />} />
+              <Route
+                path="/profil"
+                element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />}
+              />
+              <Route
+                path="/connexion"
+                element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />}
+              />
               <Route path="/lien" element={<LinkInBioPage />} />
               <Route path="/success" element={<SuccessPage />} />
               <Route path="/newsletter" element={<Navigate to="/conseils-energie" replace />} />

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, User, X, Menu, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
-// Logo avec taille ajustée
 const Logo = () => (
   <Link to="/" className="flex items-center space-x-2 group" aria-label="Retour à l'accueil">
     <img 
@@ -15,7 +14,6 @@ const Logo = () => (
   </Link>
 );
 
-// Liens de navigation dans le bon ordre
 const navLinks = [
   { href: '/nos-collections', label: 'Nos collections' },
   { href: '/bougie-emotionnelle', label: 'Découvrir ma bougie' },
@@ -26,7 +24,6 @@ const navLinks = [
 const NavItem = ({ href, label, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname === href || (href === '/nos-collections' && location.pathname.startsWith('/collections'));
-  
   return (
     <li className="relative">
       <NavLink
@@ -49,19 +46,17 @@ const NavItem = ({ href, label, onClick }) => {
 };
 
 const MobileNavItem = ({ href, label, onClick }) => (
-    <li>
-        <NavLink
-            to={href}
-            onClick={onClick}
-            className="text-2xl font-medium text-gray-800 hover:text-black transition-colors duration-300 py-3 block"
-        >
-            {label}
-        </NavLink>
-    </li>
+  <li>
+    <NavLink
+      to={href}
+      onClick={onClick}
+      className="text-2xl font-medium text-gray-800 hover:text-black transition-colors duration-300 py-3 block"
+    >
+      {label}
+    </NavLink>
+  </li>
 );
 
-
-// Icônes d'action
 const ActionIcons = ({ onCartClick, cartItemCount }) => {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -95,9 +90,9 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute right-0 mt-2 w-56 bg-white/70 backdrop-blur-lg rounded-xl shadow-2xl ring-1 ring-black/5 origin-top-right z-20"
             >
@@ -118,11 +113,11 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
                     </button>
                   </>
                 ) : (
-                   <div className="p-2">
-                     <Link to="/connexion" onClick={() => setIsMenuOpen(false)} className="block w-full text-center px-4 py-3 text-sm text-white bg-black hover:bg-gray-800 rounded-lg transition-colors">
-                        Connexion / Inscription
+                  <div className="p-2">
+                    <Link to="/connexion" onClick={() => setIsMenuOpen(false)} className="block w-full text-center px-4 py-3 text-sm text-white bg-black hover:bg-gray-800 rounded-lg transition-colors">
+                      Connexion / Inscription
                     </Link>
-                   </div>
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -133,63 +128,52 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
   );
 };
 
-
-// Header principal
 const Header = ({ onCartClick, cartItemCount }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location]);
+  useEffect(() => { setIsMenuOpen(false); }, [location]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [isMenuOpen]);
-
   return (
-    <header className="py-3">
+    <header className="py-4 bg-transparent">
       <div className="container mx-auto px-4">
         <div className={`header-capsule ${isScrolled ? 'scrolled' : ''}`}>
-            <div className="snake-border-animation">
-              <div className="header-content-wrapper flex justify-between items-center h-24 px-6">
-                <div className="flex-shrink-0">
-                  <Logo />
-                </div>
-                
-                <nav className="hidden lg:block">
-                  <ul className="flex items-center space-x-8">
-                    {navLinks.map((link) => <NavItem key={link.href} {...link} />)}
-                  </ul>
-                </nav>
+          <div className="snake-border-animation">
+            <div className="header-content-wrapper flex justify-between items-center h-24 md:h-28 px-8 py-3">
+              <div className="flex-shrink-0">
+                <Logo />
+              </div>
 
-                <div className="hidden lg:flex items-center gap-2">
-                  <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
-                </div>
+              <nav className="hidden lg:block">
+                <ul className="flex items-center space-x-8">
+                  {navLinks.map((link) => <NavItem key={link.href} {...link} />)}
+                </ul>
+              </nav>
 
-                <div className="lg:hidden flex items-center gap-2">
-                  <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
-                  <button 
-                    onClick={() => setIsMenuOpen(true)} 
-                    aria-label="Ouvrir le menu"
-                    className="btn-golden-animated h-12 w-12 flex items-center justify-center !rounded-2xl"
-                  >
-                    <Menu className="h-6 w-6 text-black" />
-                  </button>
-                </div>
+              <div className="hidden lg:flex items-center gap-2">
+                <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
+              </div>
+
+              <div className="lg:hidden flex items-center gap-2">
+                <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
+                <button
+                  onClick={() => setIsMenuOpen(true)}
+                  aria-label="Ouvrir le menu"
+                  className="btn-golden-animated h-12 w-12 flex items-center justify-center !rounded-2xl"
+                >
+                  <Menu className="h-6 w-6 text-black" />
+                </button>
               </div>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Menu Mobile */}
@@ -200,7 +184,7 @@ const Header = ({ onCartClick, cartItemCount }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden pointer-events-auto"
             onClick={() => setIsMenuOpen(false)}
           >
             <motion.div
@@ -214,13 +198,19 @@ const Header = ({ onCartClick, cartItemCount }) => {
               <div className="container mx-auto">
                 <div className="flex justify-between items-center mb-6">
                   <Logo />
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2">
+                  <button onClick={() => setIsMenuOpen(false)} className="p-2" aria-label="Fermer le menu">
                     <X className="h-7 w-7 text-gray-700" />
                   </button>
                 </div>
                 <nav>
                   <ul className="flex flex-col items-center space-y-4">
-                    {navLinks.map((link) => <MobileNavItem key={link.href} {...link} onClick={() => setIsMenuOpen(false)} />)}
+                    {navLinks.map((link) => (
+                      <MobileNavItem
+                        key={link.href}
+                        {...link}
+                        onClick={() => setIsMenuOpen(false)}
+                      />
+                    ))}
                   </ul>
                 </nav>
               </div>
