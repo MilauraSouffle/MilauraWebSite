@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/App.jsx
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
@@ -29,43 +30,92 @@ import AdventCategoryPage from '@/pages/AdventCategoryPage';
 import AuthPage from '@/pages/AuthPage';
 
 /* ------------------------------------------------------------------ */
-/* Gestionnaire de scroll global                                      */
-/* - Force le retour en haut à chaque changement de route             */
-/* - Gère les ancres (#id) avec un offset du header                   */
+/* Scroll manager robuste                                              */
 /* ------------------------------------------------------------------ */
+function scrollTopNow() {
+  // reset total (tous navigateurs)
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
 function ScrollManager() {
   const { pathname, hash } = useLocation();
+  const firstRenderRef = useRef(true);
 
-  useEffect(() => {
+  // Désactive la restauration native le plus tôt possible
+  useLayoutEffect(() => {
     if ('scrollRestoration' in window.history) {
       try { window.history.scrollRestoration = 'manual'; } catch (_) {}
     }
   }, []);
 
+  // Corrige le bfcache (pageshow) qui peut ré-afficher à l’ancienne position
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [pathname]);
+    const onPageShow = (e) => {
+      // si la page vient du cache, on impose le top
+      if (e.persisted) {
+        // petite raf pour être sûr de passer après la restau
+        requestAnimationFrame(scrollTopNow);
+        setTimeout(scrollTopNow, 60);
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
 
+  // Navigation sans hash → remonte en haut
+  useEffect(() => {
+    if (hash) return;
+
+    // forcer tout de suite (avant que d’autres effets ne scrollent)
+    scrollTopNow();
+    // double sécurité après paint
+    requestAnimationFrame(scrollTopNow);
+    const t = setTimeout(scrollTopNow, 80);
+
+    // Premier affichage de la HOME: on insiste encore (iOS lenteur images)
+    if (pathname === '/') {
+      const onLoad = () => scrollTopNow();
+      window.addEventListener('load', onLoad, { once: true });
+      const t2 = setTimeout(scrollTopNow, 160);
+      const t3 = setTimeout(scrollTopNow, 320);
+      return () => {
+        clearTimeout(t);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        window.removeEventListener('load', onLoad);
+      };
+    }
+
+    return () => clearTimeout(t);
+  }, [pathname, hash]);
+
+  // Navigation avec hash → scroll à l’ancre en tenant compte du header
   useEffect(() => {
     if (!hash) return;
-
     const scrollToHash = () => {
       const el = document.querySelector(hash);
       if (!el) return;
-
       const header = document.getElementById('site-header');
       const offset = header ? header.getBoundingClientRect().height : 0;
       const top = window.scrollY + el.getBoundingClientRect().top - offset - 12;
-
-      window.scrollTo({
-        top: Math.max(0, top),
-        left: 0,
-        behavior: 'smooth',
-      });
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'smooth' });
     };
-
     requestAnimationFrame(scrollToHash);
+    const t = setTimeout(scrollToHash, 50);
+    return () => clearTimeout(t);
   }, [pathname, hash]);
+
+  // Assure que le tout premier rendu de la home démarre bien en haut
+  useLayoutEffect(() => {
+    if (firstRenderRef.current && pathname === '/') {
+      firstRenderRef.current = false;
+      scrollTopNow();
+    } else {
+      firstRenderRef.current = false;
+    }
+  }, [pathname]);
 
   return null;
 }
@@ -77,9 +127,7 @@ function App() {
   const { user, loading } = useAuth();
 
   const shouldShowHeaderFooter = location.pathname !== '/lien';
-
-  // Pages avec Hero plein écran (le contenu commence sous le header sans padding)
-  const hasHero = location.pathname === '/';
+  const hasNoTopPadding = location.pathname === '/';
 
   return (
     <>
@@ -87,11 +135,11 @@ function App() {
         <ScrollManager />
 
         {shouldShowHeaderFooter && (
-          <div
-            id="site-header"
-            className="fixed top-0 left-0 w-full z-50 bg-transparent"
-          >
-            <AnnouncementBar />
+          <div id="site-header" className="fixed top-0 left-0 w-full z-50 bg-transparent">
+            {/* on peut masquer la barre d’annonce sur mobile si besoin d’espace */}
+            <div className="hidden sm:block">
+              <AnnouncementBar />
+            </div>
             <Header
               onCartClick={() => setIsCartOpen(true)}
               cartItemCount={cartItems.length}
@@ -99,11 +147,15 @@ function App() {
           </div>
         )}
 
-        {/* wrapper contenu : la page commence SOUS le header */}
-        <div
+        {/* wrapper contenu : la page commence SOUS le header (offset réel + safe-area iOS) */}
+        <main
           id="app-content"
-          className={`app-content ${hasHero ? 'has-hero' : 'no-hero'}`}
-          style={{ paddingTop: hasHero ? '0px' : 'var(--header-offset)' }}
+          className="app-content"
+          style={{
+            paddingTop: hasNoTopPadding
+              ? '0px'
+              : 'calc(var(--header-offset) + env(safe-area-inset-top, 0px))',
+          }}
         >
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -136,7 +188,7 @@ function App() {
               <Route path="/abonnement" element={<SubscriptionPage />} />
             </Routes>
           </AnimatePresence>
-        </div>
+        </main>
 
         {shouldShowHeaderFooter && <AIAssistant />}
         {shouldShowHeaderFooter && <ContactBubble />}

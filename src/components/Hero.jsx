@@ -43,13 +43,11 @@ export default function Hero() {
       </div>
 
       {/* CONTENU fixé en bas */}
-      <div
-        className="
-          absolute inset-x-0 bottom-0 z-10
-          container mx-auto px-4
-          pb-8 md:pb-12 lg:pb-14
-        "
-      >
+      <div className="
+  absolute inset-x-0 bottom-0 z-10
+  container mx-auto px-4
+  pb-14 sm:pb-16 md:pb-12 lg:pb-14
+">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}

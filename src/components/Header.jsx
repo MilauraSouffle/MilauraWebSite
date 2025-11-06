@@ -1,5 +1,5 @@
 // src/components/Header.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, User, X, Menu, LogOut, Heart } from 'lucide-react';
@@ -11,7 +11,7 @@ const Logo = () => (
     <img
       src="https://ik.imagekit.io/bupjuxqi6/logo%20MiL'Aura%20De%CC%81toure%CC%81%202.png?updatedAt=1762338419186"
       alt="Logo Mil’Aura"
-      className="h-20 w-auto transition-transform duration-500 ease-in-out group-hover:rotate-[360deg]"
+      className="h-12 w-auto md:h-20 transition-transform duration-500 ease-in-out group-hover:rotate-[360deg]"
     />
   </Link>
 );
@@ -71,13 +71,13 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
   if (loading) return <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>;
 
   return (
-    <div className="flex items-center gap-2 md:gap-4">
+    <div className="flex items-center gap-1.5 md:gap-4">
       <button
         onClick={onCartClick}
-        className="relative group p-2 rounded-full hover:bg-black/5 transition-colors"
+        className="relative group p-1.5 md:p-2 rounded-full hover:bg-black/5 transition-colors"
         aria-label={`Voir le panier, ${cartItemCount} articles`}
       >
-        <ShoppingBag className="h-6 w-6 text-gray-700 group-hover:text-black transition-colors" />
+        <ShoppingBag className="h-5 w-5 md:h-6 md:w-6 text-gray-700 group-hover:text-black transition-colors" />
         <AnimatePresence>
           {cartItemCount > 0 && (
             <motion.span
@@ -86,7 +86,7 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              className="absolute -top-0.5 -right-0.5 h-5 w-5 bg-gradient-to-br from-amber-500 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow"
+              className="absolute -top-0.5 -right-0.5 h-4 w-4 md:h-5 md:w-5 bg-gradient-to-br from-amber-500 to-yellow-600 text-white text-[10px] md:text-xs font-bold rounded-full flex items-center justify-center shadow"
             >
               {cartItemCount}
             </motion.span>
@@ -97,10 +97,10 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
       <div className="relative">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="group p-2 rounded-full hover:bg-black/5 transition-colors"
+          className="group p-1.5 md:p-2 rounded-full hover:bg-black/5 transition-colors"
           aria-label="Menu utilisateur"
         >
-          <User className="h-6 w-6 text-gray-700 group-hover:text-black transition-colors" />
+          <User className="h-5 w-5 md:h-6 md:w-6 text-gray-700 group-hover:text-black transition-colors" />
         </button>
 
         <AnimatePresence>
@@ -164,7 +164,7 @@ const Header = ({ onCartClick, cartItemCount }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
-  // Refs : hauteur du header et “capsule” pour l’effet glass
+  // Refs
   const headerRef = useRef(null);
   const capsuleRef = useRef(null);
 
@@ -179,8 +179,8 @@ const Header = ({ onCartClick, cartItemCount }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Publier la hauteur réelle du header → CSS var --header-offset
-  useEffect(() => {
+  // Publier la hauteur avant paint (évite les “sauts”)
+  useLayoutEffect(() => {
     const publish = () => {
       const h = headerRef.current?.getBoundingClientRect().height || 0;
       document.documentElement.style.setProperty('--header-offset', `${Math.ceil(h)}px`);
@@ -188,31 +188,25 @@ const Header = ({ onCartClick, cartItemCount }) => {
     publish();
     const ro = new ResizeObserver(publish);
     if (headerRef.current) ro.observe(headerRef.current);
-    window.addEventListener('resize', publish);
+    window.addEventListener('resize', publish, { passive: true });
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', publish);
     };
   }, []);
 
-  // Appliquer le style glass à la capsule (toujours glass, pas de beige au scroll)
+  // Appliquer l’effet glass
   useEffect(() => {
     const el = capsuleRef.current;
     if (!el) return;
-    el.classList.add('glass-header'); // classe CSS “liquid glass”
-    // on ne rajoute PAS de classe différente au scroll pour rester full glass
-  }, [isScrolled]);
+    el.classList.add('glass-header');
+  }, []);
 
-  // Petit “rubber band” mobile optionnel
+  // Petit “rubber band” mobile
   useEffect(() => {
     let startY = 0, pulling = false, raf = 0;
-    const onTouchStart = (e) => {
-      if (window.scrollY <= 0) {
-        startY = e.touches?.[0]?.clientY ?? 0;
-        pulling = true;
-      }
-    };
-    const onTouchMove = (e) => {
+    const onTouchStart = (e) => { if (window.scrollY <= 0) { startY = e.touches?.[0]?.clientY ?? 0; pulling = true; } };
+    const onTouchMove  = (e) => {
       if (!pulling) return;
       const dy = (e.touches?.[0]?.clientY ?? 0) - startY;
       if (dy > 0 && window.scrollY <= 0) {
@@ -223,11 +217,7 @@ const Header = ({ onCartClick, cartItemCount }) => {
         });
       }
     };
-    const reset = () => {
-      pulling = false;
-      cancelAnimationFrame(raf);
-      document.documentElement.style.setProperty('--rb', `0px`);
-    };
+    const reset = () => { pulling = false; cancelAnimationFrame(raf); document.documentElement.style.setProperty('--rb', `0px`); };
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', reset, { passive: true });
@@ -243,42 +233,36 @@ const Header = ({ onCartClick, cartItemCount }) => {
   return (
     <header
       ref={headerRef}
-      className="py-2 bg-transparent"
+      className="py-1 md:py-2 bg-transparent"
       style={{ translate: `0 var(--rb, 0px)` }}
     >
-      <div className="container mx-auto px-4">
-        {/* TA CAPSULE ORIGINALE – on NE la remplace pas */}
+      <div className="container mx-auto px-3 md:px-4">
         <div className={`header-capsule ${isScrolled ? 'scrolled' : ''}`}>
           <div className="snake-border-animation">
-            {/* C’est CE wrapper qui reçoit l’effet glass */}
             <div
               ref={capsuleRef}
-              className="header-content-wrapper flex justify-between items-center h-16 md:h-20 px-6 py-2"
+              className="header-content-wrapper flex justify-between items-center h-12 md:h-20 px-3 md:px-6 py-1.5"
             >
               <div className="flex-shrink-0">
                 <Logo />
               </div>
 
+              {/* Menu desktop uniquement */}
               <nav className="hidden lg:block">
                 <ul className="flex items-center space-x-8">
-                  {navLinks.map((link) => (
-                    <NavItem key={link.href} {...link} />
-                  ))}
+                  {navLinks.map((link) => <NavItem key={link.href} {...link} />)}
                 </ul>
               </nav>
 
-              <div className="hidden lg:flex items-center gap-2">
-                <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
-              </div>
-
-              <div className="lg:hidden flex items-center gap-2">
+              {/* Icônes + burger mobile */}
+              <div className="flex items-center gap-1.5 md:gap-2">
                 <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   aria-label="Ouvrir le menu"
-                  className="btn-golden-animated h-12 w-12 flex items-center justify-center !rounded-2xl"
+                  className="btn-golden-animated h-10 w-10 md:h-12 md:w-12 flex items-center justify-center !rounded-2xl"
                 >
-                  <Menu className="h-6 w-6 text-black" />
+                  <Menu className="h-5 w-5 md:h-6 md:w-6 text-black" />
                 </button>
               </div>
             </div>
@@ -286,7 +270,7 @@ const Header = ({ onCartClick, cartItemCount }) => {
         </div>
       </div>
 
-      {/* Menu Mobile */}
+      {/* Overlay mobile */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -306,26 +290,16 @@ const Header = ({ onCartClick, cartItemCount }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="container mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="logo-safe">
-                    <Logo />
-                  </div>
-                  <button
-                    onClick={() => setIsMenuOpen(false)}
-                    className="p-2 close-safe"
-                    aria-label="Fermer le menu"
-                  >
+                <div className="flex justify-between items-center mb-4">
+                  <div className="logo-safe"><Logo /></div>
+                  <button onClick={() => setIsMenuOpen(false)} className="p-2 close-safe" aria-label="Fermer le menu">
                     <X className="h-7 w-7 text-gray-700" />
                   </button>
                 </div>
                 <nav>
-                  <ul className="flex flex-col items-center space-y-4">
+                  <ul className="flex flex-col items-center space-y-3">
                     {navLinks.map((link) => (
-                      <MobileNavItem
-                        key={link.href}
-                        {...link}
-                        onClick={() => setIsMenuOpen(false)}
-                      />
+                      <MobileNavItem key={link.href} {...link} onClick={() => setIsMenuOpen(false)} />
                     ))}
                   </ul>
                 </nav>
