@@ -232,3 +232,68 @@
 .mobile-overlay { z-index: 60; }
 .close-safe { position: relative; z-index: 70; }
 .logo-safe { position: relative; z-index: 70; }
+/* === Fix capsule / snake deco qui crée le "carré" et l'ombre === */
+.header-capsule {
+  background: transparent !important;          /* pas de bloc opaque */
+  box-shadow: none !important;                 /* pas d'ombre de boîte */
+  border: none !important;
+}
+
+.snake-border-animation {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Si tu veux garder une légère pastille crème SOUS les icônes,
+   fais-le sur le vrai contenu, pas sur le wrapper global */
+.header-content-wrapper {
+  background: rgba(255,255,255,0.32);   /* crème très léger */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06); /* ombre douce, pas de "carré" */
+}/* Évite tout fond parasite et marge top implicite */
+html, body { background: #FBF9F4; }
+#site-header { background: transparent !important; }
+
+/* L'AnnouncementBar doit être flush en haut */
+.announcement-bar { margin: 0 !important; border: 0; background: #c79f54; } /* ou ta couleur actuelle */
+
+/* Supprime toute marge top du premier élément sous le header */
+main, .page-root, .routes-root { margin-top: 0 !important; }
+:root{
+  --header-offset: 0px;
+  --rb: 0px;
+}
+
+/* verre "permanent" */
+.glass-header{
+  background: rgba(255,255,255,0.28) !important;
+  backdrop-filter: saturate(1.2) blur(16px) !important;
+  -webkit-backdrop-filter: saturate(1.2) blur(16px) !important;
+  border: 1px solid rgba(255,255,255,0.45) !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+}
+
+/* au scroll on garde le même rendu (pas de beige) */
+.glass-header.glass-scrolled{
+  background: rgba(255,255,255,0.28) !important;
+}
+
+/* on neutralise les anciens fonds "crème" qui dessinaient un rectangle */
+.header-capsule,
+.header-capsule.scrolled,
+.snake-border-animation{
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* s’assure que la “capsule” interne garde les arrondis et le verre */
+.header-capsule .header-content-wrapper{
+  background: rgba(255,255,255,0.28) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255,255,255,0.45) !important;
+  border-radius: 2.25rem !important;
+}

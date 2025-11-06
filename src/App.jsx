@@ -1,13 +1,16 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ShoppingCart from '@/components/ShoppingCart';
 import AIAssistant from '@/components/AIAssistant';
 import AnnouncementBar from '@/components/AnnouncementBar';
-import { useCart } from '@/hooks/useCart';
 import ContactBubble from '@/components/ContactBubble';
+
+import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 // Pages
@@ -62,7 +65,12 @@ function App() {
   const location = useLocation();
   const { cartItems } = useCart();
   const { user, loading } = useAuth();
+
   const shouldShowHeaderFooter = location.pathname !== '/lien';
+  // pages avec hero plein écran → pas de padding-top, le header flotte
+  const hasHero =
+    location.pathname === '/' ||
+    location.pathname === '/bougie-emotionnelle';
 
   return (
     <>
@@ -82,10 +90,10 @@ function App() {
           </div>
         )}
 
-        {/* wrapper contenu avec offset dynamique sous le header */}
+        {/* wrapper contenu : la page commence SOUS le header */}
         <div
           className={`${shouldShowHeaderFooter ? '' : ''}`}
-          style={{ paddingTop: 'var(--header-offset)' }}
+          style={{ paddingTop: hasHero ? '0px' : 'var(--header-offset)' }}
         >
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -98,14 +106,24 @@ function App() {
               <Route path="/collections/:categorySlug" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/boutique" element={<Navigate to="/nos-collections" replace />} />
+
               <Route
                 path="/profil"
-                element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />}
+                element={
+                  !loading && user
+                    ? <EmotionalDashboardPage />
+                    : <Navigate to="/connexion" replace />
+                }
               />
               <Route
                 path="/connexion"
-                element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />}
+                element={
+                  !loading && !user
+                    ? <AuthPage />
+                    : <Navigate to="/profil" replace />
+                }
               />
+
               <Route path="/lien" element={<LinkInBioPage />} />
               <Route path="/success" element={<SuccessPage />} />
               <Route path="/newsletter" element={<Navigate to="/conseils-energie" replace />} />
@@ -122,7 +140,9 @@ function App() {
 
         {shouldShowHeaderFooter && <AIAssistant />}
         {shouldShowHeaderFooter && <ContactBubble />}
+
         <ShoppingCart isCartOpen={isCartOpen} setIsCartOpen={setIsCartOpen} />
+
         {shouldShowHeaderFooter && <Footer />}
       </div>
     </>
