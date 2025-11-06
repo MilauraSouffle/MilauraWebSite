@@ -1,16 +1,13 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ShoppingCart from '@/components/ShoppingCart';
 import AIAssistant from '@/components/AIAssistant';
 import AnnouncementBar from '@/components/AnnouncementBar';
-import ContactBubble from '@/components/ContactBubble';
-
 import { useCart } from '@/hooks/useCart';
+import ContactBubble from '@/components/ContactBubble';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 // Pages
@@ -31,6 +28,11 @@ import SubscriptionPage from '@/pages/SubscriptionPage';
 import AdventCategoryPage from '@/pages/AdventCategoryPage';
 import AuthPage from '@/pages/AuthPage';
 
+/* ------------------------------------------------------------------ */
+/* Gestionnaire de scroll global                                      */
+/* - Force le retour en haut à chaque changement de route             */
+/* - Gère les ancres (#id) avec un offset du header                   */
+/* ------------------------------------------------------------------ */
 function ScrollManager() {
   const { pathname, hash } = useLocation();
 
@@ -46,14 +48,22 @@ function ScrollManager() {
 
   useEffect(() => {
     if (!hash) return;
+
     const scrollToHash = () => {
       const el = document.querySelector(hash);
       if (!el) return;
+
       const header = document.getElementById('site-header');
       const offset = header ? header.getBoundingClientRect().height : 0;
       const top = window.scrollY + el.getBoundingClientRect().top - offset - 12;
-      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'smooth' });
+
+      window.scrollTo({
+        top: Math.max(0, top),
+        left: 0,
+        behavior: 'smooth',
+      });
     };
+
     requestAnimationFrame(scrollToHash);
   }, [pathname, hash]);
 
@@ -67,10 +77,9 @@ function App() {
   const { user, loading } = useAuth();
 
   const shouldShowHeaderFooter = location.pathname !== '/lien';
-  // pages avec hero plein écran → pas de padding-top, le header flotte
-  const hasHero =
-    location.pathname === '/' ||
-    location.pathname === '/bougie-emotionnelle';
+
+  // Pages avec Hero plein écran (le contenu commence sous le header sans padding)
+  const hasHero = location.pathname === '/';
 
   return (
     <>
@@ -92,7 +101,8 @@ function App() {
 
         {/* wrapper contenu : la page commence SOUS le header */}
         <div
-          className={`${shouldShowHeaderFooter ? '' : ''}`}
+          id="app-content"
+          className={`app-content ${hasHero ? 'has-hero' : 'no-hero'}`}
           style={{ paddingTop: hasHero ? '0px' : 'var(--header-offset)' }}
         >
           <AnimatePresence mode="wait">
@@ -106,24 +116,14 @@ function App() {
               <Route path="/collections/:categorySlug" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/boutique" element={<Navigate to="/nos-collections" replace />} />
-
               <Route
                 path="/profil"
-                element={
-                  !loading && user
-                    ? <EmotionalDashboardPage />
-                    : <Navigate to="/connexion" replace />
-                }
+                element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />}
               />
               <Route
                 path="/connexion"
-                element={
-                  !loading && !user
-                    ? <AuthPage />
-                    : <Navigate to="/profil" replace />
-                }
+                element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />}
               />
-
               <Route path="/lien" element={<LinkInBioPage />} />
               <Route path="/success" element={<SuccessPage />} />
               <Route path="/newsletter" element={<Navigate to="/conseils-energie" replace />} />
@@ -140,9 +140,7 @@ function App() {
 
         {shouldShowHeaderFooter && <AIAssistant />}
         {shouldShowHeaderFooter && <ContactBubble />}
-
         <ShoppingCart isCartOpen={isCartOpen} setIsCartOpen={setIsCartOpen} />
-
         {shouldShowHeaderFooter && <Footer />}
       </div>
     </>

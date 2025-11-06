@@ -52,15 +52,22 @@
 }
 
 @layer base {
-  * { @apply border-border; }
+  * {
+    @apply border-border;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Poppins', sans-serif;
   }
-  .font-script { font-family: 'Dancing Script', cursive; }
+
+  .font-script {
+    font-family: 'Dancing Script', cursive;
+  }
 }
 
 @layer components {
+
   /* Capsule du header (espacement, arrondis, pas de fond autour) */
   .header-capsule {
     @apply w-full max-w-7xl mx-auto;
@@ -71,12 +78,15 @@
   /* Contenu capsule: plus haut, arrondis prononcés, transparence douce */
   .header-content-wrapper {
     @apply relative z-10 transition-all duration-500 ease-out;
-    border-radius: 2.5rem; /* arrondis prononcés */
-    background-color: #FBF3E0; /* opaque en haut */
+    border-radius: 2.5rem;
+    /* arrondis prononcés */
+    background-color: #FBF3E0;
+    /* opaque en haut */
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     overflow: visible;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* relief léger */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    /* relief léger */
   }
 
   /* Au scroll: rester “propre” (quasi opaque), blur un peu plus fort */
@@ -122,6 +132,7 @@
     padding: 2px;
     background: transparent;
   }
+
   .golden-frame::before {
     content: "";
     position: absolute;
@@ -153,6 +164,7 @@
   position: relative;
   overflow: hidden;
 }
+
 .btn-golden-animated::before {
   content: '';
   position: absolute;
@@ -163,19 +175,20 @@
   background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: all 650ms;
 }
-.btn-golden-animated:hover::before { left: 100%; }
+
+.btn-golden-animated:hover::before {
+  left: 100%;
+}
 
 /* Halo animé du bandeau doré (AnnouncementBar) */
 .shimmer-effect {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.35) 50%,
-    rgba(255,255,255,0) 100%
-  );
+  background: linear-gradient(100deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0) 100%);
   transform: translateX(-100%);
   animation: shimmer-sweep 3.2s linear infinite;
   mix-blend-mode: screen;
@@ -184,16 +197,35 @@
 
 /* Animations */
 @keyframes snake-anim {
-  0%   { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
-  25%  { clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%); }
-  50%  { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%); }
-  75%  { clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0); }
-  100% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+  0% {
+    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
+  }
+
+  25% {
+    clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
+  }
+
+  50% {
+    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+
+  75% {
+    clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0);
+  }
+
+  100% {
+    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
+  }
 }
 
 @keyframes shimmer-sweep {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 /* === Header glass + spacing + rubber-band ================================== */
 :root{
@@ -229,13 +261,25 @@
 
 /* Option: petite zone “hit” pour s’assurer que la capsule capte bien les clics */
 .header-hit { pointer-events: auto; }
-.mobile-overlay { z-index: 60; }
-.close-safe { position: relative; z-index: 70; }
-.logo-safe { position: relative; z-index: 70; }
+.mobile-overlay {
+  z-index: 60;
+}
+
+.close-safe {
+  position: relative;
+  z-index: 70;
+}
+
+.logo-safe {
+  position: relative;
+  z-index: 70;
+}
 /* === Fix capsule / snake deco qui crée le "carré" et l'ombre === */
 .header-capsule {
-  background: transparent !important;          /* pas de bloc opaque */
-  box-shadow: none !important;                 /* pas d'ombre de boîte */
+  background: transparent !important;
+  /* pas de bloc opaque */
+  box-shadow: none !important;
+  /* pas d'ombre de boîte */
   border: none !important;
 }
 
@@ -248,12 +292,15 @@
 /* Si tu veux garder une légère pastille crème SOUS les icônes,
    fais-le sur le vrai contenu, pas sur le wrapper global */
 .header-content-wrapper {
-  background: rgba(255,255,255,0.32);   /* crème très léger */
+  background: rgba(255,255,255,0.32);
+  /* crème très léger */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 28px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06); /* ombre douce, pas de "carré" */
-}/* Évite tout fond parasite et marge top implicite */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  /* ombre douce, pas de "carré" */
+}
+/* Évite tout fond parasite et marge top implicite */
 html, body { background: #FBF9F4; }
 #site-header { background: transparent !important; }
 
@@ -262,38 +309,60 @@ html, body { background: #FBF9F4; }
 
 /* Supprime toute marge top du premier élément sous le header */
 main, .page-root, .routes-root { margin-top: 0 !important; }
-:root{
+:root {
   --header-offset: 0px;
   --rb: 0px;
 }
 
 /* verre "permanent" */
-.glass-header{
-  background: rgba(255,255,255,0.28) !important;
+.glass-header {
+  background: rgba(255, 255, 255, 0.28) !important;
   backdrop-filter: saturate(1.2) blur(16px) !important;
   -webkit-backdrop-filter: saturate(1.2) blur(16px) !important;
-  border: 1px solid rgba(255,255,255,0.45) !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* au scroll on garde le même rendu (pas de beige) */
-.glass-header.glass-scrolled{
-  background: rgba(255,255,255,0.28) !important;
+.glass-header.glass-scrolled {
+  background: rgba(255, 255, 255, 0.28) !important;
 }
 
 /* on neutralise les anciens fonds "crème" qui dessinaient un rectangle */
 .header-capsule,
 .header-capsule.scrolled,
-.snake-border-animation{
+.snake-border-animation {
   background: transparent !important;
   box-shadow: none !important;
 }
 
 /* s’assure que la “capsule” interne garde les arrondis et le verre */
-.header-capsule .header-content-wrapper{
-  background: rgba(255,255,255,0.28) !important;
+.header-capsule .header-content-wrapper {
+  background: rgba(255, 255, 255, 0.28) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255,255,255,0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
   border-radius: 2.25rem !important;
+}
+/* Empêche le margin-collapse du premier enfant (bande blanche fantôme) */
+.app-content {
+  display: flow-root;
+  /* crée un BFC = pas de collapse */
+  position: relative;
+}
+
+/* Sécurité : on annule un éventuel gros margin-top du 1er bloc */
+.app-content>*:first-child {
+  margin-top: 0 !important;
+}
+
+/* Quand il y a un hero (home/bougie), on n’ajoute pas d’espace de tête */
+.app-content.has-hero {
+  padding-top: 0 !important;
+}
+
+/* Optionnel : si une section “bleue” doit respirer, fais du padding et pas du margin */
+.section-top-pad {
+  padding-top: 1.25rem;
+  /* ex: 20px */
 }
