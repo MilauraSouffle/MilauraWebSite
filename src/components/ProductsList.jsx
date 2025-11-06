@@ -1,3 +1,4 @@
+// src/components/ProductsList.jsx
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -6,6 +7,8 @@ import { ShoppingCart, Loader2, Heart } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
 import { getProducts } from '@/api/EcommerceApi';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/lib/customSupabaseClient';
 
 const placeholderImage =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTFkZWRjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgc3R5bGU9ImRvbWluYW50LWJhc2VsaW5lOmNlbnRyYWwiIGZpbGw9IiNhYWFhYWEiPk5vIGltYWdlPC90ZXh0Pjwvc3ZnPg==";
@@ -98,7 +101,7 @@ const AnimatedButtonText = ({ text }) => {
 };
 
 /* --------------------- Carte Produit --------------------- */
-const ProductCard = ({ product, index, backContext }) => {
+const ProductCard = ({ product, index, backContext, isFavorite, onToggleFavorite }) => {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -159,7 +162,7 @@ const ProductCard = ({ product, index, backContext }) => {
       whileHover={{ y: -5 }}
       className="golden-frame group"
     >
-      <div className="bg-[#FBF9F4] rounded-[1.3rem] overflow-hidden h-full flex flex-col"> {/* Adjusted rounded corners to fit inside the 1.5rem golden frame */}
+      <div className="bg-[#FBF9F4] rounded-[1.3rem] overflow-hidden h-full flex flex-col">
         <Link to={`/product/${product.id}`} state={backContext} className="block">
           <div className="aspect-square bg-[#FBF9F4]/50 flex items-center justify-center relative overflow-hidden p-8">
             <img
@@ -167,19 +170,24 @@ const ProductCard = ({ product, index, backContext }) => {
               alt={product.title || product.name}
               className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-500"
             />
+            {/* Cœur favoris */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full"
+              className={`absolute top-4 right-4 p-2 rounded-full backdrop-blur-sm ${
+                isFavorite ? 'bg-amber-100/90' : 'bg-white/80'
+              }`}
+              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
               onClick={(e) => {
                 e.preventDefault();
-                toast({
-                  title: "💝 Ajouté aux favoris !",
-                  description: `${product.title || product.name} a été ajouté à vos favoris`,
-                });
+                e.stopPropagation();
+                onToggleFavorite(product);
               }}
             >
-              <Heart className="w-5 h-5 text-[#C3A46D]" />
+              <Heart
+                className={`w-5 h-5 ${isFavorite ? 'text-amber-600' : 'text-[#C3A46D]'}`}
+                fill={isFavorite ? 'currentColor' : 'none'}
+              />
             </motion.button>
           </div>
         </Link>
@@ -221,7 +229,81 @@ const ProductsList = ({ limit, collectionId, collectionSlug, collectionName, pro
   const [products, setProducts] = useState(initialProducts || []);
   const [loading, setLoading] = useState(!initialProducts);
   const [error, setError] = useState(null);
+
+  // favoris
+  const { user } = useAuth();
+  const [favoriteSet, setFavoriteSet] = useState(() => new Set()); // Set(product_id)
+  const { toast } = useToast();
+  const navigate = useLocation(); // only for backContext below, real navigate not needed here
   const location = useLocation();
+
+  // charger les favoris utilisateur
+  useEffect(() => {
+    let isMounted = true;
+    const loadFavs = async () => {
+      if (!user) {
+        if (isMounted) setFavoriteSet(new Set());
+        return;
+      }
+      const { data, error: err } = await supabase
+        .from('favorites')
+        .select('product_id')
+        .eq('user_id', user.id);
+      if (!isMounted) return;
+      if (err) {
+        console.error('Load favorites error:', err);
+        return;
+      }
+      setFavoriteSet(new Set(data.map((r) => String(r.product_id))));
+    };
+    loadFavs();
+    return () => { isMounted = false; };
+  }, [user]);
+
+  const handleToggleFavorite = useCallback(
+    async (product) => {
+      if (!user) {
+        toast({
+          title: 'Connexion requise',
+          description: 'Connectez-vous pour enregistrer vos favoris.',
+        });
+        // ne force pas la redirection, tu peux activer si tu veux :
+        // navigate('/connexion');
+        return;
+      }
+      const pid = String(product.id);
+      const isFav = favoriteSet.has(pid);
+
+      if (isFav) {
+        const { error: delErr } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', pid);
+        if (delErr) {
+          toast({ title: 'Erreur', description: "Impossible de retirer des favoris.", variant: 'destructive' });
+          return;
+        }
+        setFavoriteSet((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+        toast({ title: 'Retiré des favoris', description: `${product.title || product.name} a été retiré.` });
+      } else {
+        const { error: insErr } = await supabase
+          .from('favorites')
+          .insert({ user_id: user.id, product_id: pid });
+        if (insErr) {
+          toast({ title: 'Erreur', description: "Impossible d'ajouter aux favoris.", variant: 'destructive' });
+          return;
+        }
+        setFavoriteSet((prev) => new Set(prev).add(pid));
+        toast({ title: '💝 Ajouté aux favoris', description: `${product.title || product.name} a été ajouté.` });
+      }
+    },
+    [user, favoriteSet, toast]
+  );
 
   // Déduction du contexte courant pour savoir où "revenir"
   const path = location.pathname ? deaccent(location.pathname) : '';
@@ -229,10 +311,8 @@ const ProductsList = ({ limit, collectionId, collectionSlug, collectionName, pro
 
   // Construit l’URL + label de retour
   const backContext = useMemo(() => {
-    // par défaut
     let ctx = { backTo: '/nos-collections', backLabel: 'Retour aux collections' };
 
-    // /collections/:slug
     const m = location.pathname.match(/^\/collections\/([^/?#]+)/);
     if (m) {
       const slug = m[1];
@@ -349,7 +429,14 @@ const ProductsList = ({ limit, collectionId, collectionSlug, collectionName, pro
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} index={index} backContext={backContext} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          index={index}
+          backContext={backContext}
+          isFavorite={favoriteSet.has(String(product.id))}
+          onToggleFavorite={handleToggleFavorite}
+        />
       ))}
     </div>
   );

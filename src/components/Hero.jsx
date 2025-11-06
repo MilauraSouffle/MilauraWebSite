@@ -1,160 +1,112 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+// src/components/Hero.jsx
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
-const AnimatedButtonText = ({ text }) => {
-  const letters = Array.from(text);
+// Image de fond (ImageKit)
+const HERO_IMG_SRC =
+  'https://ik.imagekit.io/bupjuxqi6/photo%20slide%20principal%20Milaura%20.png?updatedAt=1762444544560';
 
-  const container = {
-    hidden: { opacity: 0 },
-    visible: (i = 1) => ({
-      opacity: 1,
-      transition: { staggerChildren: 0.04, delayChildren: 0.04 * i },
-    }),
-  };
-
-  const child = {
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
-    },
-    hidden: {
-      opacity: 0,
-      y: 10,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
-    },
-  };
-
+export default function Hero() {
   return (
-    <motion.div
-      className="flex justify-center items-center overflow-hidden"
-      variants={container}
-      initial="hidden"
-      animate="visible"
+    <section
+      className="relative w-full overflow-hidden"
+      // plein écran moins la hauteur du header
+      style={{ minHeight: 'calc(100vh - var(--header-offset))' }}
+      aria-label="Présentation Mil’Aura"
     >
-      {letters.map((letter, index) => (
-        <motion.span variants={child} key={`${letter}-${index}`}>
-          {letter === " " ? "\u00A0" : letter}
-        </motion.span>
-      ))}
-    </motion.div>
-  );
-};
-
-
-const Hero = () => {
-  const [isHovered, setIsHovered] = useState(false);
-  const buttonText = "Découvrir ma bougie";
-
-  return (
-    <section className="min-h-screen flex items-center justify-center pt-24 px-4 relative overflow-hidden bg-[#FBF9F4]">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 w-full h-full bg-cover bg-center opacity-90" style={{ backgroundImage: "url('https://horizons-cdn.hostinger.com/5ed1deb4-535d-4bff-8341-dc46a5456047/e472933ce7a3880aed19f334470b9214.png')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#FBF9F4] via-[#FBF9F4]/50 to-transparent"></div>
-        <motion.div 
-          className="absolute inset-0 bg-gradient-radial from-transparent via-purple-200/10 to-transparent"
-          animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 8, repeat: Infinity, repeatType: "mirror" }}
+      {/* IMAGE DE FOND + traitements */}
+      <div className="absolute inset-0 -z-10">
+        <img
+          src={HERO_IMG_SRC}
+          alt="Univers Mil’Aura"
+          className={`
+            h-full w-full object-cover opacity-60
+            /* recadrage : décale légèrement à gauche pour centrer la fleur */
+            object-[31%_41%] md:object-[30%_41%]
+          `}
+          loading="eager"
+          fetchpriority="high"
         />
-        {/* Subtle glow animation on the flower */}
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25vw] h-[25vw] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(224, 192, 255, 0.3) 0%, rgba(224, 192, 255, 0) 70%)',
-            filter: 'blur(20px)',
-          }}
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.6, 0.8, 0.6],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            repeatType: 'mirror',
-            ease: 'easeInOut',
-          }}
+
+        {/* assombrissement progressif en bas pour la lisibilité */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[48vh] bg-gradient-to-t from-black/40 via-black/18 to-transparent"
+        />
+        {/* fondu doux vers la couleur de la section suivante */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[22vh] bg-gradient-to-b from-transparent to-[#FBF9F4]"
         />
       </div>
-      
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-gradient-to-br from-[#BFA57C]/30 to-[#A48B65]/30"
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: [0, 1, 0], scale: 1 }}
-            transition={{
-              duration: Math.random() * 5 + 5,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-            style={{
-              width: Math.random() * 10 + 5,
-              height: Math.random() * 10 + 5,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
 
-      <div className="container mx-auto relative z-10">
+      {/* CONTENU fixé en bas */}
+      <div
+        className="
+          absolute inset-x-0 bottom-0 z-10
+          container mx-auto px-4
+          pb-8 md:pb-12 lg:pb-14
+        "
+      >
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "circOut", delay: 0.3 }}
-          className="text-center max-w-4xl mx-auto"
+          transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+          className="mx-auto max-w-4xl text-center"
         >
-          <h1 className="text-5xl md:text-7xl font-script font-bold mb-6 text-gradient-gold-warm leading-tight">
+          {/* Titre bas, noir + liseré doré (tient sur l’assombrissement) */}
+          <h1
+            className="font-script text-[clamp(2.6rem,7.5vw,4.8rem)] leading-tight mb-3 md:mb-4"
+            style={{
+              color: '#111111',
+              WebkitTextStroke: '1px #C3A46D',
+              textShadow:
+                '0 2px 10px rgba(0,0,0,0.25), 0 6px 16px rgba(0,0,0,0.25)',
+            }}
+          >
             Chaque pierre raconte une histoire
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-700/90 mb-10 leading-relaxed max-w-3xl mx-auto">
-            Découvrez votre bougie émotionnelle, faites notre quizz émotionnel et laissez-vous guider par la magie Mil'Aura.
+          {/* Sous-titre juste au-dessus du CTA */}
+          <p
+            className="mx-auto max-w-3xl text-[clamp(1.05rem,2.1vw,1.2rem)] leading-relaxed mb-6 md:mb-8"
+            style={{
+              color: '#0f172a',
+              textShadow: '0 2px 8px rgba(255,255,255,0.25)',
+            }}
+          >
+            Découvrez votre bougie émotionnelle, faites notre quizz émotionnel
+            et laissez-vous guider par la magie Mil’Aura.
           </p>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: "backOut" }}
-            onHoverStart={() => setIsHovered(true)}
-            onHoverEnd={() => setIsHovered(false)}
-          >
-            <Link to="/bougie-emotionnelle">
-              <Button
-                size="lg"
-                className="btn-golden-animated !px-12 !py-8 !text-xl"
-              >
-                <AnimatePresence mode="wait">
-                  {isHovered ? (
-                    <AnimatedButtonText text={buttonText} />
-                  ) : (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      {buttonText}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </Link>
-          </motion.div>
+          {/* CTA collé visuellement au bas */}
+          <Link to="/bougie-emotionnelle" aria-label="Découvrir ma pierre">
+            <Button
+              size="lg"
+              className="
+                btn-golden-animated
+                px-8 py-6 md:px-10
+                text-[clamp(1rem,1.6vw,1.1rem)]
+                font-semibold
+                rounded-[20px]
+                shadow-[0_10px_25px_rgba(0,0,0,0.35)]
+              "
+            >
+              Découvrir ma pierre
+            </Button>
+          </Link>
+
+          {/* Petite ligne info sous le CTA */}
+          <div className="mt-4 md:mt-5 flex items-center justify-center gap-2 text-sm md:text-base text-white/90">
+            <span aria-hidden>🇫🇷</span>
+            <span className="backdrop-blur-[1px] drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]">
+              Pierres certifiées • Préparé avec soin en France
+            </span>
+          </div>
         </motion.div>
       </div>
     </section>
   );
-};
-
-export default Hero;
+}

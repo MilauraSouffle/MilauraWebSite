@@ -1,8 +1,10 @@
+// src/components/CollectionsCarousel.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { getProducts } from "@/api/EcommerceApi";
 
+/* ---------- registre catégories (slugs alignés) ---------- */
 const CATEGORY_REGISTRY = {
   pcol_01K88QVKKZN29HYFBYXRAV0106: { name: "Bijoux énergétiques", slug: "bijoux-energetiques" },
   pcol_01K88X47XDD86DGRCST06ZRFP4: { name: "Bougie émotionnelle", slug: "bougie-emotionnelle" },
@@ -12,11 +14,11 @@ const CATEGORY_REGISTRY = {
   pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-bien-etre" },
 };
 
+/* ---------- helpers d’indexation produits → catégories ---------- */
 const deaccent = (s = "") =>
   s.toString().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
 const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 const singular = (t) => (t.endsWith("s") ? t.slice(0, -1) : t);
-
 const categoryTokens = (name, slug) => {
   const base = deaccent(name);
   const baseSlug = deaccent(slug || "");
@@ -27,16 +29,16 @@ const categoryTokens = (name, slug) => {
   const words = onlyWords.split(" ").filter(Boolean);
   const singles = words.map(singular);
   const pieces = [...new Set([...words, ...singles])];
-  return [base, baseSlug, andAmp, andWord, noAmp, onlyWords, ...pieces].map(deaccent).filter(Boolean);
+  return [base, baseSlug, andAmp, andWord, noAmp, onlyWords, ...pieces]
+    .map(deaccent)
+    .filter(Boolean);
 };
-
 const CATEGORY_CATALOG = Object.entries(CATEGORY_REGISTRY).map(([id, meta]) => ({
   id,
   name: meta.name,
   slug: meta.slug,
   tokens: categoryTokens(meta.name, meta.slug),
 }));
-
 const collectProductHints = (p) => {
   const ids = new Set();
   const tokens = new Set();
@@ -52,30 +54,33 @@ const collectProductHints = (p) => {
   toArray(p?.categories).forEach(pushStruct);
   toArray(p?.collection_ids).forEach((x) => ids.add(String(x)));
   toArray(p?.category_ids).forEach((x) => ids.add(String(x)));
-  ["collection","collection_name","collection_slug","category","category_name","category_slug"].forEach((k)=>{
+  ["collection", "collection_name", "collection_slug", "category", "category_name", "category_slug"].forEach((k) => {
     const v = p?.[k];
     if (v) tokens.add(deaccent(v));
   });
   const m = p?.metadata || {};
-  ["collection","collection_name","category","category_name","category_slug"].forEach((k)=>{
+  ["collection", "collection_name", "category", "category_name", "category_slug"].forEach((k) => {
     const v = m?.[k];
     if (v) tokens.add(deaccent(v));
   });
   const rawTags = p?.tags;
-  if (typeof rawTags === "string") rawTags.split(",").forEach((t)=>tokens.add(deaccent(t)));
-  else if (Array.isArray(rawTags)) rawTags.forEach((t)=>tokens.add(deaccent(t)));
+  if (typeof rawTags === "string") rawTags.split(",").forEach((t) => tokens.add(deaccent(t)));
+  else if (Array.isArray(rawTags)) rawTags.forEach((t) => tokens.add(deaccent(t)));
   const maybeTitle = deaccent(p?.title || p?.name || "");
   const maybeSubtitle = deaccent(p?.subtitle || "");
   if (maybeTitle) tokens.add(maybeTitle);
   if (maybeSubtitle) tokens.add(maybeSubtitle);
   return { ids: [...ids], tokens: [...tokens] };
 };
-
 const fuzzyMatch = (a, b) => a === b || a.includes(b) || b.includes(a);
-
 function buildCategoryIndex(products) {
   const index = CATEGORY_CATALOG.map((c) => ({
-    id: c.id, name: c.name, slug: c.slug, tokens: c.tokens, count: 0, cover: null,
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    tokens: c.tokens,
+    count: 0,
+    cover: null,
   }));
   const byId = new Map(index.map((c) => [c.id, c]));
   for (const p of products) {
@@ -84,179 +89,217 @@ function buildCategoryIndex(products) {
     let matched = false;
     for (const cid of ids) {
       const cell = byId.get(cid);
-      if (cell) { matched = true; cell.count += 1; if (!cell.cover && cover) cell.cover = cover; }
+      if (cell) {
+        matched = true;
+        cell.count += 1;
+        if (!cell.cover && cover) cell.cover = cover;
+      }
     }
     if (!matched && tokens.length) {
       for (const cell of index) {
         const hit = tokens.some((t) => cell.tokens.some((ct) => fuzzyMatch(t, ct)));
-        if (hit) { cell.count += 1; if (!cell.cover && cover) cell.cover = cover; matched = true; }
+        if (hit) {
+          cell.count += 1;
+          if (!cell.cover && cover) cell.cover = cover;
+          matched = true;
+        }
       }
     }
   }
   return index;
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 24, scale: 0.98 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 120, damping: 18 } },
-  hover: { y: -3, transition: { duration: 0.18 } },
-};
-
-const Card = ({ item }) => {
+/* ---------- carte ---------- */
+function Card({ item, active }) {
   const disabled = item.count === 0;
+
   return (
     <motion.div
-      variants={itemVariants}
-      whileHover="hover"
-      className={`group relative rounded-xl overflow-hidden bg-white/90 shadow-sm max-w-[360px] w-full ${disabled ? "opacity-75 pointer-events-none" : ""}`}
-      title={disabled ? "Aucun article dans cette catégorie pour le moment" : undefined}
+      layout
+      className={`snap-center shrink-0 overflow-hidden rounded-3xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] ring-1 ring-black/5 bg-white/70 backdrop-blur-md
+                  w-[86vw] xs:w-[80vw] sm:w-[70vw] md:w-[46rem] lg:w-[34rem] xl:w-[30rem] 2xl:w-[32rem]
+                  aspect-[4/5] md:aspect-[16/10]`}
+      animate={{
+        scale: active ? 1 : 0.95,
+        y: active ? 0 : 4,
+        filter: active ? "brightness(1)" : "brightness(0.95)",
+      }}
+      transition={{ type: "spring", stiffness: 180, damping: 18 }}
     >
-      <Link to={`/collections/${item.slug}?categoryId=${encodeURIComponent(item.id)}`} className="block">
-        <div className="aspect-[4/3] relative overflow-hidden bg-[#FBF9F4]">
+      <Link
+        to={`/collections/${item.slug}?categoryId=${encodeURIComponent(item.id)}`}
+        className={`block h-full ${disabled ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <div className="relative h-[68%] md:h-[70%]">
           {item.cover ? (
-            <img src={item.cover} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-400" loading="lazy" />
+            <img
+              src={item.cover}
+              alt={item.name}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
           ) : (
-            <div className="w-full h-full grid place-items-center text-gray-300 text-sm">Aucune image</div>
+            <div className="absolute inset-0 grid place-items-center text-gray-300 text-sm">
+              Aucune image
+            </div>
           )}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(251,249,244,0) 40%, rgba(251,249,244,0.65) 80%, rgba(251,249,244,0.9) 100%)",
+            }}
+          />
         </div>
-        <div className="px-5 pt-3.5 pb-4 bg-gradient-to-br from-[#E9CC8A] to-[#C3A46D]">
-          <h3 className="text-[1.05rem] md:text-lg font-bold text-black">{item.name}</h3>
-          <p className="text-sm text-black/80">{item.count} article{item.count > 1 ? "s" : ""}</p>
+
+        <div className="h-[32%] md:h-[30%] p-5 flex flex-col justify-center bg-gradient-to-br from-[#E9CC8A] to-[#C3A46D]">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black leading-snug">
+            {item.name}
+          </h3>
+          <p className="text-sm md:text-base text-black/80 mt-1">
+            {item.count} article{item.count > 1 ? "s" : ""}
+          </p>
         </div>
       </Link>
     </motion.div>
   );
-};
+}
 
+/* ---------- carrousel scroll-snap ---------- */
 export default function CollectionsCarousel() {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const [current, setCurrent] = useState(0);           // ← index actif (mobile)
-  const scrollerRef = useRef(null);
+  const [active, setActive] = useState(0);
+  const trackRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        setLoading(true);
-        const res = await getProducts({ limit: 250 });
-        const all = res?.products || res?.items || [];
-        const index = buildCategoryIndex(all);
-        if (alive) setItems(index);
-      } finally {
-        if (alive) setLoading(false);
+      const res = await getProducts({ limit: 250 });
+      const all = res?.products || res?.items || [];
+      const index = buildCategoryIndex(all);
+      if (!alive) return;
+      setItems(index);
+      if (index.length) {
+        const mid = Math.floor(index.length / 2);
+        setActive(mid);
+        requestAnimationFrame(() => {
+          try {
+            const node = trackRef.current?.children?.[mid];
+            node?.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+          } catch {}
+        });
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const list = useMemo(() => items || [], [items]);
-
-  // Détection de la “slide” courante sur mobile
   useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    const handler = () => {
-      const firstCard = el.querySelector('.snap-start');
-      const cardW = firstCard ? firstCard.getBoundingClientRect().width : Math.max(280, el.clientWidth * 0.8);
-      const gap = 24; // gap-6
-      const idx = Math.round(el.scrollLeft / (cardW + gap));
-      setCurrent(Math.max(0, Math.min(idx, list.length - 1)));
+    const wrap = trackRef.current;
+    if (!wrap) return;
+    const onScroll = () => {
+      if (!wrap.children.length) return;
+      let best = 0;
+      let bestDist = Infinity;
+      const center = wrap.scrollLeft + wrap.clientWidth / 2;
+      Array.from(wrap.children).forEach((el, i) => {
+        const rectLeft = el.offsetLeft + el.clientWidth / 2;
+        const dist = Math.abs(rectLeft - center);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      });
+      setActive(best);
     };
+    wrap.addEventListener("scroll", onScroll, { passive: true });
+    return () => wrap.removeEventListener("scroll", onScroll);
+  }, [items.length]);
 
-    el.addEventListener('scroll', handler, { passive: true });
-    window.addEventListener('resize', handler);
-    handler();
-    return () => {
-      el.removeEventListener('scroll', handler);
-      window.removeEventListener('resize', handler);
-    };
-  }, [list.length]);
-
-  const scrollByCards = (dir = 1) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const firstCard = el.querySelector('.snap-start');
-    const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : Math.min(360, Math.max(280, el.clientWidth / 3));
-    const gap = 24;
-    el.scrollBy({ left: dir * (cardWidth + gap) * 2.5, behavior: "smooth" });
+  const scrollByCards = (dir) => {
+    const wrap = trackRef.current;
+    if (!wrap) return;
+    const child = wrap.children?.[active];
+    const w = child ? child.clientWidth : wrap.clientWidth * 0.8;
+    wrap.scrollBy({ left: dir * (w + 24), behavior: "smooth" });
   };
 
+  const dots = useMemo(() => items.map((_, i) => i), [items]);
+
   return (
-    <section className="py-10 md:py-12 bg-[#FBF9F4] relative">
+    <section className="py-10 md:py-12 bg-[#FBF9F4]">
       <div className="container mx-auto px-4">
         <motion.h2
-          className="text-5xl font-script font-bold text-gradient-gold-warm text-center mb-4"
-          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.7, ease: "easeOut" }}
+          className="text-5xl font-script font-bold text-gradient-gold-warm text-center mb-3"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
           Nos Collections
         </motion.h2>
 
         <motion.p
-          className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-8"
-          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+          className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-6 md:mb-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
         >
           Explorez nos univers et trouvez les créations qui résonnent avec votre âme.
         </motion.p>
 
-        {loading ? (
-          <div className="text-center text-gray-400 py-12">Chargement…</div>
-        ) : (
-          <>
+        <div className="relative">
+          {/* Track centré + largeur max pour éviter l’effet “trop grand” */}
+          <div
+            className="mx-auto max-w-[1200px]"
+          >
             <div
-              className="relative"
-              onMouseEnter={() => setHovered(true)}
-              onMouseLeave={() => setHovered(false)}
+              ref={trackRef}
+              className="flex gap-5 md:gap-4 lg:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4
+                         [scrollbar-width:none] [-ms-overflow-style:none]"
+              style={{ scrollPaddingInline: "12px" }}
             >
-              {/* Boutons desktop */}
-              <button
-                type="button"
-                aria-label="Précédent"
-                onClick={() => scrollByCards(-1)}
-                className={`hidden md:flex items-center justify-center absolute left-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                aria-label="Suivant"
-                onClick={() => scrollByCards(1)}
-                className={`hidden md:flex items-center justify-center absolute right-1 top-1/2 -translate-y-1/2 z-10 h-12 w-12 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow ring-1 ring-black/5 backdrop-blur transition-opacity ${hovered ? "opacity-100" : "opacity-70"}`}
-              >
-                ›
-              </button>
+              <style>{`.snap-x::-webkit-scrollbar{ display:none; }`}</style>
+              {items.map((it, i) => (
+                <Card key={it.id} item={it} active={i === active} />
+              ))}
+            </div>
+          </div>
 
-              {/* Scroller */}
-              <div
-                ref={scrollerRef}
-                className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 pr-2"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {list.map((it) => (
-                  <div key={it.id} className="snap-start shrink-0 min-w-[280px] sm:min-w-[300px] lg:min-w-[360px]">
-                    <Card item={it} />
-                  </div>
-                ))}
-              </div>
+          {/* commandes */}
+          <div className="mt-5 md:mt-6 flex items-center justify-center gap-5">
+            <button
+              type="button"
+              onClick={() => scrollByCards(-1)}
+              aria-label="Précédent"
+              className="grid place-items-center h-10 w-10 md:h-9 md:w-9 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+            >
+              ‹
+            </button>
+
+            <div className="flex items-center gap-2">
+              {dots.map((i) => (
+                <span
+                  key={i}
+                  className={`rounded-full transition-all ${
+                    i === active ? "w-5 h-1.5 bg-gray-800" : "w-2 h-1.5 bg-gray-300"
+                  }`}
+                />
+              ))}
             </div>
 
-            {/* Dots d’indication – mobile uniquement */}
-            {list.length > 1 && (
-              <div className="md:hidden flex justify-center gap-2 mt-3">
-                {list.map((_, i) => (
-                  <span
-                    key={i}
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${i === current ? "bg-gray-800" : "bg-gray-300"}`}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+            <button
+              type="button"
+              onClick={() => scrollByCards(+1)}
+              aria-label="Suivant"
+              className="grid place-items-center h-10 w-10 md:h-9 md:w-9 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+            >
+              ›
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
