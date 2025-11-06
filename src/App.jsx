@@ -82,8 +82,11 @@ function App() {
           </div>
         )}
 
-        {/* PLUS DE padding-top: le Hero passe sous le header (overlay), donc plus de “bande” */}
-        <div className={`${shouldShowHeaderFooter ? '' : ''}`}>
+        {/* wrapper contenu avec offset dynamique sous le header */}
+        <div
+          className={`${shouldShowHeaderFooter ? '' : ''}`}
+          style={{ paddingTop: 'var(--header-offset)' }}
+        >
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage />} />

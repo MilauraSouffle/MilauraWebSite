@@ -195,3 +195,40 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+/* === Header glass + spacing + rubber-band ================================== */
+:root{
+  --header-offset: 0px;   /* hauteur dynamique du header → padding top page */
+  --rb: 0px;              /* amplitude du petit rebond mobile */
+}
+
+/* Effet verre: doux en haut, plus lisible en scroll */
+.glass-header {
+  background: rgba(251, 249, 244, 0.52);              /* ton beige existant, + transparent */
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  transition: background-color .28s ease, box-shadow .28s ease, transform .2s ease;
+  transform: translateY(var(--rb));
+}
+
+/* En scroll: un peu plus opaque, toujours “liquid glass” */
+.glass-scrolled {
+  background: rgba(251, 243, 224, 0.92);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  backdrop-filter: blur(18px) saturate(130%);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+}
+
+/* Sécurité z-index pour logo et croix mobile (ne rien changer visuellement) */
+.logo-safe { position: relative; z-index: 60; }
+.close-safe { position: relative; z-index: 60; }
+
+/* Le menu mobile doit passer au-dessus de tout */
+.mobile-overlay { z-index: 70; }
+
+/* Option: petite zone “hit” pour s’assurer que la capsule capte bien les clics */
+.header-hit { pointer-events: auto; }
+.mobile-overlay { z-index: 60; }
+.close-safe { position: relative; z-index: 70; }
+.logo-safe { position: relative; z-index: 70; }

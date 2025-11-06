@@ -56,8 +56,6 @@ export const AuthProvider = ({ children }) => {
         });
       }
     } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-      // This case handles when a user exists but is not confirmed. Supabase returns a user object but no session.
-      // For a better UX, we can treat this as "user already exists".
       toast({
         variant: "destructive",
         title: "Utilisateur existant",
@@ -98,6 +96,21 @@ export const AuthProvider = ({ children }) => {
     return { error };
   }, [toast]);
 
+  const signInWithGoogle = useCallback(async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion Google",
+        description: error.message || "Une erreur est survenue.",
+      });
+      setLoading(false);
+    }
+  }, [toast]);
+
   const signOut = useCallback(async () => {
     setLoading(true);
     const { error } = await supabase.auth.signOut();
@@ -124,8 +137,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
-  }), [user, session, loading, signUp, signIn, signOut]);
+  }), [user, session, loading, signUp, signIn, signInWithGoogle, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

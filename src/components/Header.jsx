@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, User, X, Menu, LogOut, Heart } from 'lucide-react';
@@ -6,10 +6,10 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const Logo = () => (
   <Link to="/" className="flex items-center space-x-2 group" aria-label="Retour à l'accueil">
-    <img 
-      src="https://ik.imagekit.io/bupjuxqi6/logo%20MiL'Aura%20De%CC%81toure%CC%81%202.png?updatedAt=1762338419186" 
-      alt="Logo Mil’Aura" 
-      className="h-20 w-auto transition-transform duration-500 ease-in-out group-hover:rotate-[360deg]" 
+    <img
+      src="https://ik.imagekit.io/bupjuxqi6/logo%20MiL'Aura%20De%CC%81toure%CC%81%202.png?updatedAt=1762338419186"
+      alt="Logo Mil’Aura"
+      className="h-20 w-auto transition-transform duration-500 ease-in-out group-hover:rotate-[360deg]"
     />
   </Link>
 );
@@ -94,7 +94,7 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute right-0 mt-2 w-56 bg-white/70 backdrop-blur-lg rounded-xl shadow-2xl ring-1 ring-black/5 origin-top-right z-20"
+              className="absolute right-0 mt-2 w-56 bg-white/70 backdrop-blur-lg rounded-xl shadow-2xl ring-1 ring-black/5 origin-top-right z-50"
             >
               <div className="py-2">
                 {user ? (
@@ -104,11 +104,11 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
                       <p className="text-sm font-medium text-gray-800 truncate">{user.email}</p>
                     </div>
                     <Link to="/profil" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-200/50 transition-colors w-full">
-                      <Heart className="h-4 w-4 text-amber-600"/>
+                      <Heart className="h-4 w-4 text-amber-600" />
                       <span>Mon Profil Émotionnel</span>
                     </Link>
                     <button onClick={() => { signOut(); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50/50 transition-colors w-full">
-                      <LogOut className="h-4 w-4"/>
+                      <LogOut className="h-4 w-4" />
                       <span>Déconnexion</span>
                     </button>
                   </>
@@ -133,6 +133,10 @@ const Header = ({ onCartClick, cartItemCount }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
+  // refs pour hauteur + capsule “glass”
+  const headerRef = useRef(null);
+  const capsuleRef = useRef(null);
+
   useEffect(() => { setIsMenuOpen(false); }, [location]);
 
   useEffect(() => {
@@ -141,10 +145,64 @@ const Header = ({ onCartClick, cartItemCount }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // applique les classes glass selon le scroll
+  useEffect(() => {
+    const el = capsuleRef.current;
+    if (!el) return;
+    el.classList.add('glass-header');
+    if (isScrolled) el.classList.add('glass-scrolled');
+    else el.classList.remove('glass-scrolled');
+  }, [isScrolled]);
+
+  // publie la hauteur réelle du header → --header-offset
+  useEffect(() => {
+    const publish = () => {
+      const h = headerRef.current?.getBoundingClientRect().height || 0;
+      document.documentElement.style.setProperty('--header-offset', `${Math.ceil(h)}px`);
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    if (headerRef.current) ro.observe(headerRef.current);
+    window.addEventListener('resize', publish);
+    return () => { ro.disconnect(); window.removeEventListener('resize', publish); };
+  }, []);
+
+  // petit rubber-band mobile
+  useEffect(() => {
+    let startY = 0, pulling = false, raf = 0;
+    const onTouchStart = (e) => { if (window.scrollY <= 0) { startY = e.touches?.[0]?.clientY ?? 0; pulling = true; } };
+    const onTouchMove = (e) => {
+      if (!pulling) return;
+      const dy = (e.touches?.[0]?.clientY ?? 0) - startY;
+      if (dy > 0 && window.scrollY <= 0) {
+        const amt = Math.min(28, dy / 3);
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          document.documentElement.style.setProperty('--rb', `${amt}px`);
+        });
+      }
+    };
+    const reset = () => {
+      pulling = false;
+      cancelAnimationFrame(raf);
+      document.documentElement.style.setProperty('--rb', `0px`);
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', reset, { passive: true });
+    window.addEventListener('touchcancel', reset, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', reset);
+      window.removeEventListener('touchcancel', reset);
+    };
+  }, []);
+
   return (
-    <header className="py-4 bg-transparent">
+    <header ref={headerRef} className="py-4 bg-transparent">
       <div className="container mx-auto px-4">
-        <div className={`header-capsule ${isScrolled ? 'scrolled' : ''}`}>
+        <div ref={capsuleRef} className={`header-capsule ${isScrolled ? 'scrolled' : ''}`}>
           <div className="snake-border-animation">
             <div className="header-content-wrapper flex justify-between items-center h-24 md:h-28 px-8 py-3">
               <div className="flex-shrink-0">
@@ -176,48 +234,52 @@ const Header = ({ onCartClick, cartItemCount }) => {
         </div>
       </div>
 
-      {/* Menu Mobile */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden pointer-events-auto"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <motion.div
-              initial={{ y: '-100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="absolute top-0 left-0 right-0 bg-[#FBF9F4] shadow-lg p-4"
-              onClick={(e) => e.stopPropagation()}
+       {/* Menu Mobile */}
+<AnimatePresence>
+  {isMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm mobile-overlay z-[60] lg:hidden pointer-events-auto"
+      onClick={() => setIsMenuOpen(false)}
+    >
+      <motion.div
+        initial={{ y: '-100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '-100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="absolute top-0 left-0 right-0 bg-[#FBF9F4] shadow-lg p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="logo-safe"><Logo /></div>
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="p-2 close-safe"
+              aria-label="Fermer le menu"
             >
-              <div className="container mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <Logo />
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2" aria-label="Fermer le menu">
-                    <X className="h-7 w-7 text-gray-700" />
-                  </button>
-                </div>
-                <nav>
-                  <ul className="flex flex-col items-center space-y-4">
-                    {navLinks.map((link) => (
-                      <MobileNavItem
-                        key={link.href}
-                        {...link}
-                        onClick={() => setIsMenuOpen(false)}
-                      />
-                    ))}
-                  </ul>
-                </nav>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <X className="h-7 w-7 text-gray-700" />
+            </button>
+          </div>
+          <nav>
+            <ul className="flex flex-col items-center space-y-4">
+              {navLinks.map((link) => (
+                <MobileNavItem
+                  key={link.href}
+                  {...link}
+                  onClick={() => setIsMenuOpen(false)}
+                />
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </header>
   );
 };
