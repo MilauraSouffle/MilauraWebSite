@@ -156,9 +156,9 @@
     inset: 0;
     pointer-events: none;
     background: linear-gradient(100deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.35) 50%,
-      rgba(255, 255, 255, 0) 100%);
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0) 100%);
     transform: translateX(-100%);
     animation: shimmer-sweep 3.2s linear infinite;
     mix-blend-mode: screen;
@@ -166,24 +166,53 @@
   }
 
   /* Sécurité z-index / overlay */
-  .logo-safe { position: relative; z-index: 70; }
-  .close-safe { position: relative; z-index: 70; }
-  .mobile-overlay { z-index: 70; }
+  .logo-safe {
+    position: relative;
+    z-index: 70;
+  }
+
+  .close-safe {
+    position: relative;
+    z-index: 70;
+  }
+
+  .mobile-overlay {
+    z-index: 70;
+  }
 
 }
 
 /* === ANIMATIONS === */
 @keyframes snake-anim {
-  0% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
-  25% { clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%); }
-  50% { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%); }
-  75% { clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0); }
-  100% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+  0% {
+    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
+  }
+
+  25% {
+    clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
+  }
+
+  50% {
+    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+
+  75% {
+    clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0);
+  }
+
+  100% {
+    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
+  }
 }
 
 @keyframes shimmer-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* === HEADER GLASS FINAL === */
@@ -195,15 +224,47 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
   transform: translateY(var(--rb));
 }
-.glass-header.glass-scrolled { background: rgba(255,255,255,0.28) !important; }
+
+.glass-header.glass-scrolled {
+  background: rgba(255, 255, 255, 0.28) !important;
+}
 
 /* Fond général + bar d’annonce */
-html, body { background: #FBF9F4; }
-#site-header { background: transparent !important; }
-.announcement-bar { margin: 0 !important; border: 0; background: #c79f54; }
+html,
+body {
+  background: #FBF9F4;
+}
+
+#site-header {
+  background: transparent !important;
+}
+
+.announcement-bar {
+  margin: 0 !important;
+  border: 0;
+  background: #c79f54;
+}
 
 /* === BFC / MARGES === */
-.app-content { display: flow-root; position: relative; }
-.app-content > *:first-child { margin-top: 0 !important; }
-.app-content.has-hero { padding-top: 0 !important; }
-.section-top-pad { padding-top: 1.25rem; }
+.app-content {
+  display: flow-root;
+  position: relative;
+}
+
+.app-content>*:first-child {
+  margin-top: 0 !important;
+}
+
+.app-content.has-hero {
+  padding-top: 0 !important;
+}
+
+.section-top-pad {
+  padding-top: 1.25rem;
+}
+/* Tuck: quand une page démarre par un hero pleine largeur sous le header fixe */
+.page-top-hero {
+  margin-top: calc(-1 * var(--header-offset));
+  padding-top: calc(var(--header-offset) + 1rem);
+  /* garde un peu d’air sous le header */
+}

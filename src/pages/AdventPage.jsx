@@ -1,62 +1,193 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import ProductsList from '@/components/ProductsList';
-import Seo from '@/components/Seo';
+// src/App.jsx
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import ShoppingCart from '@/components/ShoppingCart';
+import AIAssistant from '@/components/AIAssistant';
+import AnnouncementBar from '@/components/AnnouncementBar';
+import { useCart } from '@/hooks/useCart';
+import ContactBubble from '@/components/ContactBubble';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
-const pageVariants = {
-  initial: { opacity: 0 },
-  in: { opacity: 1, transition: { duration: 0.6 } },
-  out: { opacity: 0, transition: { duration: 0.4 } },
-};
+// Pages
+import HomePage from '@/pages/HomePage';
+import ShopPage from '@/pages/ShopPage';
+import ProductDetailPage from '@/pages/ProductDetailPage';
+import EmotionalDashboardPage from '@/pages/EmotionalDashboardPage';
+import AdventPage from '@/pages/AdventPage';
+import LinkInBioPage from '@/pages/LinkInBioPage';
+import CollectionsPage from '@/pages/CollectionsPage';
+import SuccessPage from '@/pages/SuccessPage';
+import BougieEmotionnellePage from '@/pages/BougieEmotionnellePage';
+import NouveautesPage from '@/pages/NouveautesPage';
+import ContactPage from '@/pages/ContactPage';
+import BlogPage from '@/pages/BlogPage';
+import ArticlePage from '@/pages/ArticlePage';
+import SubscriptionPage from '@/pages/SubscriptionPage';
+import AdventCategoryPage from '@/pages/AdventCategoryPage';
+import AuthPage from '@/pages/AuthPage';
 
-// ID de la collection "Calendrier de l'Avent"
-const CALENDRIER_ID = 'pcol_01K88QSKEZQ9032VE7PBEWG0GH';
+/* ------------------------------------------------------------------ */
+/* Scroll manager robuste                                              */
+/* ------------------------------------------------------------------ */
+function scrollTopNow() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
 
-export default function AdventCategoryPage() {
+function ScrollManager() {
+  const { pathname, hash } = useLocation();
+  const firstRenderRef = useRef(true);
+
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      try { window.history.scrollRestoration = 'manual'; } catch (_) { }
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) {
+        requestAnimationFrame(scrollTopNow);
+        setTimeout(scrollTopNow, 60);
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
+  useEffect(() => {
+    if (hash) return;
+
+    scrollTopNow();
+    requestAnimationFrame(scrollTopNow);
+    const t = setTimeout(scrollTopNow, 80);
+
+    if (pathname === '/') {
+      const onLoad = () => scrollTopNow();
+      window.addEventListener('load', onLoad, { once: true });
+      const t2 = setTimeout(scrollTopNow, 160);
+      const t3 = setTimeout(scrollTopNow, 320);
+      return () => {
+        clearTimeout(t);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        window.removeEventListener('load', onLoad);
+      };
+    }
+
+    return () => clearTimeout(t);
+  }, [pathname, hash]);
+
+  useEffect(() => {
+    if (!hash) return;
+    const scrollToHash = () => {
+      const el = document.querySelector(hash);
+      if (!el) return;
+      const header = document.getElementById('site-header');
+      const offset = header ? header.getBoundingClientRect().height : 0;
+      const top = window.scrollY + el.getBoundingClientRect().top - offset - 12;
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'smooth' });
+    };
+    requestAnimationFrame(scrollToHash);
+    const t = setTimeout(scrollToHash, 50);
+    return () => clearTimeout(t);
+  }, [pathname, hash]);
+
+  useLayoutEffect(() => {
+    if (firstRenderRef.current && pathname === '/') {
+      firstRenderRef.current = false;
+      scrollTopNow();
+    } else {
+      firstRenderRef.current = false;
+    }
+  }, [pathname]);
+
+  return null;
+}
+
+function App() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const location = useLocation();
+  const routesWithHero = ['/', '/calendriers-de-l-avent', '/bougie-emotionnelle'];
+  const isHeroLike = routesWithHero.includes(location.pathname);
+  const { cartItems } = useCart();
+  const { user, loading } = useAuth();
+
+  const shouldShowHeaderFooter = location.pathname !== '/lien';
+  const isHomePage = location.pathname === '/';
+
   return (
     <>
-      <Seo
-        title="La Magie de l’Avent – Mil’aura"
-        description="24 jours, 24 trésors minéraux. Un rituel quotidien de découvertes et de bien-être."
-        canonical="https://milaura.fr/collections/calendrier-de-lavent"
-      />
-      <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} className="bg-[#FBF9F4]">
-        {/* HERO sans neige (page liste) */}
-        <section className="relative overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(180deg,#cfe2f3 0%,#e7f0fb 35%,#fbf9f4 100%)' }}
-            aria-hidden
-          />
-          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-10 md:pb-12 text-center">
-            <motion.h1
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="font-script text-4xl md:text-5xl text-gradient-gold-warm drop-shadow-[0_2px_12px_rgba(0,0,0,0.25)]"
-            >
-              La Magie de l’Avent
-            </motion.h1>
+      <div className="min-h-screen bg-[#FBF9F4] overflow-x-hidden">
+        <ScrollManager />
 
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 0.55, ease: 'easeOut', delay: 0.05 }}
-              className="max-w-4xl mx-auto mt-3 text-[17px] md:text-lg text-black/70"
-            >
-              Chaque jour une nouvelle porte, chaque porte un nouveau trésor. Plongez dans un rituel de 24 jours de
-              découvertes énergétiques et laissez la magie des pierres illuminer votre mois de décembre.
-            </motion.p>
+        {shouldShowHeaderFooter && (
+          <div id="site-header" className="fixed top-0 left-0 w-full z-50 bg-transparent">
+            <div className="hidden sm:block">
+              <AnnouncementBar />
+            </div>
+            <Header
+              onCartClick={() => setIsCartOpen(true)}
+              cartItemCount={cartItems.length}
+            />
           </div>
-        </section>
+        )}
 
-        {/* Liste des produits */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-          <ProductsList collectionId={CALENDRIER_ID} />
-        </section>
-      </motion.div>
+        {/* wrapper contenu : sur la home pas de padding-top (le Hero gère l’offset),
+           sur les autres pages on garde l’offset réel + safe-area iOS */}
+        <main
+          id="app-content"
+          className={`app-content ${isHeroLike ? 'has-hero' : ''}`}
+          style={{
+            paddingTop: isHeroLike
+              ? '0px'
+              : 'calc(var(--header-offset) + env(safe-area-inset-top, 0px))',
+          }}
+        >
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/bougie-emotionnelle" element={<BougieEmotionnellePage />} />
+              <Route path="/calendriers-de-l-avent" element={<AdventPage />} />
+              <Route path="/collections/calendrier-de-lavent" element={<AdventCategoryPage />} />
+              <Route path="/nouveautes" element={<NouveautesPage />} />
+              <Route path="/nos-collections" element={<CollectionsPage />} />
+              <Route path="/collections/:categorySlug" element={<ShopPage />} />
+              <Route path="/product/:id" element={<ProductDetailPage />} />
+              <Route path="/boutique" element={<Navigate to="/nos-collections" replace />} />
+              <Route
+                path="/profil"
+                element={!loading && user ? <EmotionalDashboardPage /> : <Navigate to="/connexion" replace />}
+              />
+              <Route
+                path="/connexion"
+                element={!loading && !user ? <AuthPage /> : <Navigate to="/profil" replace />}
+              />
+              <Route path="/lien" element={<LinkInBioPage />} />
+              <Route path="/success" element={<SuccessPage />} />
+              <Route path="/newsletter" element={<Navigate to="/conseils-energie" replace />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/conseils-energie" element={<BlogPage />} />
+              <Route path="/conseils-energie/:slug" element={<ArticlePage />} />
+              <Route path="/collections" element={<Navigate to="/nos-collections" replace />} />
+              <Route path="/collections/nouveautes" element={<Navigate to="/nouveautes" replace />} />
+              <Route path="/collections/tous-les-produits" element={<Navigate to="/boutique" replace />} />
+              <Route path="/abonnement" element={<SubscriptionPage />} />
+            </Routes>
+          </AnimatePresence>
+        </main>
+
+        {shouldShowHeaderFooter && <AIAssistant />}
+        {shouldShowHeaderFooter && <ContactBubble />}
+        <ShoppingCart isCartOpen={isCartOpen} setIsCartOpen={setIsCartOpen} />
+        {shouldShowHeaderFooter && <Footer />}
+      </div>
     </>
   );
 }
+
+export default App;

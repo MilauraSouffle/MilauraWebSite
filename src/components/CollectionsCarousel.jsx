@@ -4,6 +4,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getProducts } from "@/api/EcommerceApi";
 
+/* ---------- couleurs de raccord (carrousel → calendrier) ---------- */
+const CREME = "#FBF9F4";   // fond page
+const BLUE0 = "#EAF2FF";   // haut du dégradé de la section calendrier
+
 /* ---------- registre catégories (slugs alignés) ---------- */
 const CATEGORY_REGISTRY = {
   pcol_01K88QVKKZN29HYFBYXRAV0106: { name: "Bijoux énergétiques", slug: "bijoux-energetiques" },
@@ -136,13 +140,13 @@ function Card({ item, active }) {
         shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] ring-1 ring-black/5
         bg-white/70 backdrop-blur-md
         /* largeur responsive “safe” */
-        w-[86vw] xs:w-[80vw] sm:w-[72vw]
-        md:w-[34rem] lg:w-[30rem] xl:w-[18rem] 2xl:w-[30rem]
-        /* ratio: on RESTE vertical aussi sur desktop pour respecter les visuels */
+        w-[86vw] xs:w-[82vw] sm:w-[72vw]
+        md:w-[34rem] lg:w-[28rem] xl:w-[24rem] 2xl:w-[26rem]
+        /* ratio: vertical, aussi sur desktop */
         aspect-[4/5] md:aspect-[5/4]
       `}
       animate={{
-        scale: active ? 1 : 0.96,
+        scale: active ? 1 : 0.965,
         y: active ? 0 : 4,
         filter: active ? "brightness(1)" : "brightness(0.97)",
       }}
@@ -152,7 +156,7 @@ function Card({ item, active }) {
         to={`/collections/${item.slug}?categoryId=${encodeURIComponent(item.id)}`}
         className={`block h-full ${disabled ? "pointer-events-none opacity-60" : ""}`}
       >
-        {/* zone image : un peu plus haute, et object-contain sur desktop */}
+        {/* Image */}
         <div className="relative h-[66%] md:h-[68%]">
           {item.cover ? (
             <img
@@ -170,7 +174,7 @@ function Card({ item, active }) {
               Aucune image
             </div>
           )}
-          {/* léger dégradé pour mieux fondre la cartouche */}
+          {/* dégradé pour fondre la cartouche */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -194,7 +198,7 @@ function Card({ item, active }) {
   );
 }
 
-/* ---------- carrousel scroll-snap ---------- */
+/* ---------- carrousel scroll-snap + fondu de raccord ---------- */
 export default function CollectionsCarousel() {
   const [items, setItems] = useState([]);
   const [active, setActive] = useState(0);
@@ -219,9 +223,7 @@ export default function CollectionsCarousel() {
         });
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
   useEffect(() => {
@@ -235,10 +237,7 @@ export default function CollectionsCarousel() {
       Array.from(wrap.children).forEach((el, i) => {
         const rectLeft = el.offsetLeft + el.clientWidth / 2;
         const dist = Math.abs(rectLeft - center);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = i;
-        }
+        if (dist < bestDist) { bestDist = dist; best = i; }
       });
       setActive(best);
     };
@@ -257,8 +256,9 @@ export default function CollectionsCarousel() {
   const dots = useMemo(() => items.map((_, i) => i), [items]);
 
   return (
-    <section className="pt-2 md:pt-4 pb-8 md:pb-10 bg-[#FBF9F4]">
-      <div className="container mx-auto px-4">
+    <section className="relative pt-2 md:pt-4 pb-8 md:pb-10" style={{ background: CREME }}>
+      {/* contenu */}
+      <div className="relative z-[1] container mx-auto px-4">
         <motion.h2
           className="text-5xl font-script font-bold text-gradient-gold-warm text-center mb-3"
           initial={{ opacity: 0, y: 30 }}
@@ -327,6 +327,15 @@ export default function CollectionsCarousel() {
           </div>
         </div>
       </div>
+
+      {/* fondu de raccord vers la section Calendrier */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 right-0 -bottom-10 h-16 md:h-20"
+        style={{
+          background: `linear-gradient(180deg, rgba(251,249,244,0) 0%, ${BLUE0} 100%)`,
+        }}
+      />
     </section>
   );
 }
