@@ -268,3 +268,77 @@ body {
   padding-top: calc(var(--header-offset) + 1rem);
   /* garde un peu d’air sous le header */
 }
+/* === Panneaux or + shimmer réutilisables (cart + menu mobile) ============= */
+
+/* Variante “liquid gold” */
+.panel-gold {
+  position: relative;
+  background: linear-gradient(135deg, #E9CC8A 0%, #C3A46D 100%);
+  /* teinte douce pour ne pas “cramer” */
+  background-color: #D9BC7D;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+  border-left: 1px solid rgba(255, 255, 255, .45);
+  backdrop-filter: saturate(1.2) blur(6px);
+  -webkit-backdrop-filter: saturate(1.2) blur(6px);
+}
+
+/* Variante “liquid glass crème” (si tu veux tester) */
+.panel-glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.28);
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
+  backdrop-filter: saturate(1.2) blur(16px);
+  -webkit-backdrop-filter: saturate(1.2) blur(16px);
+}
+@layer components {
+/* === Panneaux or + shimmer ============================================= */
+
+.panel-gold{
+  position: relative;
+  background: linear-gradient(135deg, #E9CC8A 0%, #C3A46D 100%);
+  background-color: #D9BC7D;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  border-left: 1px solid rgba(255,255,255,.45);
+  backdrop-filter: saturate(1.2) blur(6px);
+  -webkit-backdrop-filter: saturate(1.2) blur(6px);
+}
+
+.panel-glass{
+  position: relative;
+  background: rgba(255,255,255,0.28);
+  border-left: 1px solid rgba(255,255,255,0.45);
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  backdrop-filter: saturate(1.2) blur(16px);
+  -webkit-backdrop-filter: saturate(1.2) blur(16px);
+}
+
+.panel-shimmer{ overflow: hidden; }
+.panel-shimmer::after{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  transform: translateX(-120%);
+  background: linear-gradient(100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0) 100%);
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  animation: panel-shimmer-scan 3.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes panel-shimmer-scan{
+  0%{ transform: translateX(-120%); }
+  100%{ transform: translateX(120%); }
+}
+
+.panel-gold .text-on-panel,
+.panel-glass .text-on-panel{ color:#111; }
+
+.panel-gold .btn-on-panel,
+.panel-glass .btn-on-panel{
+  background:#111; color:#fff; border-radius:9999px; padding:.6rem 1rem;
+}
+}

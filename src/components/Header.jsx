@@ -63,7 +63,7 @@ const MobileNavItem = ({ href, label, onClick }) => (
   </li>
 );
 
-/* ---------------------- Icônes d’action ------------------ */
+/* ---------------------- Icônes d’action (desktop) -------- */
 const ActionIcons = ({ onCartClick, cartItemCount }) => {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -158,6 +158,35 @@ const ActionIcons = ({ onCartClick, cartItemCount }) => {
   );
 };
 
+/* ---------------------- Icônes d’action (mobile) ---------- */
+const MobileIcons = ({ onCartClick, cartItemCount }) => {
+  const { user } = useAuth();
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={onCartClick}
+        className="relative group h-10 w-10 rounded-2xl bg-white/40 backdrop-blur-sm ring-1 ring-black/10 grid place-items-center hover:bg-white/60 transition"
+        aria-label={`Voir le panier, ${cartItemCount} articles`}
+      >
+        <ShoppingBag className="h-5 w-5 text-black/80" />
+        {cartItemCount > 0 && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-amber-500 text-white text-[10px] font-bold grid place-items-center shadow">
+            {cartItemCount}
+          </span>
+        )}
+      </button>
+
+      <Link
+        to={user ? '/profil' : '/connexion'}
+        aria-label="Compte"
+        className="h-10 w-10 rounded-2xl bg-white/40 backdrop-blur-sm ring-1 ring-black/10 grid place-items-center hover:bg-white/60 transition"
+      >
+        <User className="h-5 w-5 text-black/80" />
+      </Link>
+    </div>
+  );
+};
+
 /* -------------------------- Header ----------------------- */
 const Header = ({ onCartClick, cartItemCount }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -247,20 +276,21 @@ const Header = ({ onCartClick, cartItemCount }) => {
                 <Logo />
               </div>
 
-              {/* Menu desktop uniquement */}
+              {/* Menu desktop */}
               <nav className="hidden lg:block">
                 <ul className="flex items-center space-x-8">
                   {navLinks.map((link) => <NavItem key={link.href} {...link} />)}
                 </ul>
               </nav>
 
-              {/* Icônes desktop uniquement */}
+              {/* Icônes desktop */}
               <div className="hidden lg:flex items-center gap-1.5 md:gap-2">
                 <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
               </div>
 
-              {/* Burger mobile uniquement */}
+              {/* Icônes + burger mobile */}
               <div className="flex lg:hidden items-center gap-1.5 md:gap-2">
+                <MobileIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   aria-label="Ouvrir le menu"
@@ -290,16 +320,21 @@ const Header = ({ onCartClick, cartItemCount }) => {
               animate={{ y: 0 }}
               exit={{ y: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="absolute top-0 left-0 right-0 bg-[#FBF9F4] shadow-lg p-4"
+              className="
+                absolute top-0 left-0 right-0
+                panel-gold panel-shimmer ring-1 ring-black/10
+                shadow-xl p-4 rounded-b-3xl
+              "
               onClick={(e) => e.stopPropagation()}
             >
               <div className="container mx-auto">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-2">
                   <div className="logo-safe"><Logo /></div>
                   <button onClick={() => setIsMenuOpen(false)} className="p-2 close-safe" aria-label="Fermer le menu">
-                    <X className="h-7 w-7 text-gray-700" />
+                    <X className="h-7 w-7 text-black/80" />
                   </button>
                 </div>
+
                 <nav>
                   <ul className="flex flex-col items-center space-y-3">
                     {navLinks.map((link) => (
