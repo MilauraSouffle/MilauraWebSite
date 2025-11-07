@@ -93,7 +93,7 @@
     background: rgba(255, 255, 255, 0.28) !important;
   }
 
-  /* Cadre doré animé (autour de la capsule) */
+  /* Cadre doré animé (autour de la capsule du header) */
   .snake-border-animation {
     position: relative;
     border-radius: 2.5rem;
@@ -118,6 +118,34 @@
     z-index: 0;
     pointer-events: none;
   }
+
+  /* === Cadre doré réutilisable pour tes cartes/produits ================== */
+  .golden-frame {
+    position: relative;
+    border-radius: 1.25rem; /* adapte si besoin sur les cartes produits */
+    padding: 2px;           /* espace pour la bordure dorée */
+    background: transparent;
+  }
+
+  .golden-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Variante plus ronde au besoin */
+  .golden-frame.rounded-3xl { border-radius: 1.5rem; }
+  .golden-frame.rounded-2xl { border-radius: 1.25rem; }
 
   /* Texte doré */
   .text-gradient-gold-warm {
@@ -166,53 +194,23 @@
   }
 
   /* Sécurité z-index / overlay */
-  .logo-safe {
-    position: relative;
-    z-index: 70;
-  }
-
-  .close-safe {
-    position: relative;
-    z-index: 70;
-  }
-
-  .mobile-overlay {
-    z-index: 70;
-  }
-
+  .logo-safe { position: relative; z-index: 70; }
+  .close-safe { position: relative; z-index: 70; }
+  .mobile-overlay { z-index: 70; }
 }
 
 /* === ANIMATIONS === */
 @keyframes snake-anim {
-  0% {
-    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-  }
-
-  25% {
-    clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
-  }
-
-  50% {
-    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%);
-  }
-
-  75% {
-    clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0);
-  }
-
-  100% {
-    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-  }
+  0%   { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+  25%  { clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%); }
+  50%  { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%); }
+  75%  { clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0); }
+  100% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
 }
 
 @keyframes shimmer-sweep {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* === HEADER GLASS FINAL === */
@@ -230,14 +228,8 @@
 }
 
 /* Fond général + bar d’annonce */
-html,
-body {
-  background: #FBF9F4;
-}
-
-#site-header {
-  background: transparent !important;
-}
+html, body { background: #FBF9F4; }
+#site-header { background: transparent !important; }
 
 .announcement-bar {
   margin: 0 !important;
@@ -246,35 +238,23 @@ body {
 }
 
 /* === BFC / MARGES === */
-.app-content {
-  display: flow-root;
-  position: relative;
-}
+.app-content { display: flow-root; position: relative; }
+.app-content>*:first-child { margin-top: 0 !important; }
+.app-content.has-hero { padding-top: 0 !important; }
+.section-top-pad { padding-top: 1.25rem; }
 
-.app-content>*:first-child {
-  margin-top: 0 !important;
-}
-
-.app-content.has-hero {
-  padding-top: 0 !important;
-}
-
-.section-top-pad {
-  padding-top: 1.25rem;
-}
 /* Tuck: quand une page démarre par un hero pleine largeur sous le header fixe */
-.page-top-hero {
+.page-top-hero{
   margin-top: calc(-1 * var(--header-offset));
-  padding-top: calc(var(--header-offset) + 1rem);
-  /* garde un peu d’air sous le header */
+  padding-top: calc(var(--header-offset) + 1rem); /* garde un peu d’air sous le header */
 }
+
 /* === Panneaux or + shimmer réutilisables (cart + menu mobile) ============= */
 
 /* Variante “liquid gold” */
 .panel-gold {
   position: relative;
   background: linear-gradient(135deg, #E9CC8A 0%, #C3A46D 100%);
-  /* teinte douce pour ne pas “cramer” */
   background-color: #D9BC7D;
   box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
   border-left: 1px solid rgba(255, 255, 255, .45);
@@ -282,7 +262,7 @@ body {
   -webkit-backdrop-filter: saturate(1.2) blur(6px);
 }
 
-/* Variante “liquid glass crème” (si tu veux tester) */
+/* Variante “liquid glass crème” */
 .panel-glass {
   position: relative;
   background: rgba(255, 255, 255, 0.28);
@@ -291,54 +271,54 @@ body {
   backdrop-filter: saturate(1.2) blur(16px);
   -webkit-backdrop-filter: saturate(1.2) blur(16px);
 }
+
+/* doublon utilitaire panels (ok d’avoir deux blocs @layer components) */
 @layer components {
-/* === Panneaux or + shimmer ============================================= */
+  .panel-gold{
+    position: relative;
+    background: linear-gradient(135deg, #E9CC8A 0%, #C3A46D 100%);
+    background-color: #D9BC7D;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    border-left: 1px solid rgba(255,255,255,.45);
+    backdrop-filter: saturate(1.2) blur(6px);
+    -webkit-backdrop-filter: saturate(1.2) blur(6px);
+  }
 
-.panel-gold{
-  position: relative;
-  background: linear-gradient(135deg, #E9CC8A 0%, #C3A46D 100%);
-  background-color: #D9BC7D;
-  box-shadow: 0 20px 60px rgba(0,0,0,.2);
-  border-left: 1px solid rgba(255,255,255,.45);
-  backdrop-filter: saturate(1.2) blur(6px);
-  -webkit-backdrop-filter: saturate(1.2) blur(6px);
-}
+  .panel-glass{
+    position: relative;
+    background: rgba(255,255,255,0.28);
+    border-left: 1px solid rgba(255,255,255,0.45);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    backdrop-filter: saturate(1.2) blur(16px);
+    -webkit-backdrop-filter: saturate(1.2) blur(16px);
+  }
 
-.panel-glass{
-  position: relative;
-  background: rgba(255,255,255,0.28);
-  border-left: 1px solid rgba(255,255,255,0.45);
-  box-shadow: 0 20px 60px rgba(0,0,0,.18);
-  backdrop-filter: saturate(1.2) blur(16px);
-  -webkit-backdrop-filter: saturate(1.2) blur(16px);
-}
+  .panel-shimmer{ overflow: hidden; }
+  .panel-shimmer::after{
+    content:"";
+    position:absolute;
+    inset:-20%;
+    transform: translateX(-120%);
+    background: linear-gradient(100deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0) 100%);
+    filter: blur(10px);
+    mix-blend-mode: screen;
+    animation: panel-shimmer-scan 3.6s linear infinite;
+    pointer-events: none;
+  }
 
-.panel-shimmer{ overflow: hidden; }
-.panel-shimmer::after{
-  content:"";
-  position:absolute;
-  inset:-20%;
-  transform: translateX(-120%);
-  background: linear-gradient(100deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.55) 50%,
-    rgba(255,255,255,0) 100%);
-  filter: blur(10px);
-  mix-blend-mode: screen;
-  animation: panel-shimmer-scan 3.6s linear infinite;
-  pointer-events: none;
-}
+  @keyframes panel-shimmer-scan{
+    0%{ transform: translateX(-120%); }
+    100%{ transform: translateX(120%); }
+  }
 
-@keyframes panel-shimmer-scan{
-  0%{ transform: translateX(-120%); }
-  100%{ transform: translateX(120%); }
-}
+  .panel-gold .text-on-panel,
+  .panel-glass .text-on-panel{ color:#111; }
 
-.panel-gold .text-on-panel,
-.panel-glass .text-on-panel{ color:#111; }
-
-.panel-gold .btn-on-panel,
-.panel-glass .btn-on-panel{
-  background:#111; color:#fff; border-radius:9999px; padding:.6rem 1rem;
-}
+  .panel-gold .btn-on-panel,
+  .panel-glass .btn-on-panel{
+    background:#111; color:#fff; border-radius:9999px; padding:.6rem 1rem;
+  }
 }
