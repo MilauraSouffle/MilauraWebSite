@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === BASE TYPO ET VARIABLES === */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -26,6 +27,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    --header-offset: 0px;
+    --rb: 0px;
   }
 
   .dark {
@@ -49,9 +52,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -66,45 +67,38 @@
   }
 }
 
+/* === COMPOSANTS CUSTOM === */
 @layer components {
 
-  /* Capsule du header (espacement, arrondis, pas de fond autour) */
+  /* Capsule du header */
   .header-capsule {
     @apply w-full max-w-7xl mx-auto;
     background: transparent !important;
     overflow: visible;
+    box-shadow: none !important;
+    border: none !important;
   }
 
-  /* Contenu capsule: plus haut, arrondis prononcés, transparence douce */
   .header-content-wrapper {
     @apply relative z-10 transition-all duration-500 ease-out;
-    border-radius: 2.5rem;
-    /* arrondis prononcés */
-    background-color: #FBF3E0;
-    /* opaque en haut */
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    overflow: visible;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    /* relief léger */
+    background: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    border-radius: 2.25rem !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
   }
 
-  /* Au scroll: rester “propre” (quasi opaque), blur un peu plus fort */
   .header-capsule.scrolled .header-content-wrapper {
-    background-color: rgba(251, 243, 224, 0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.28) !important;
   }
 
-  /* Cadre doré animé autour de la capsule */
+  /* Cadre doré animé (autour de la capsule) */
   .snake-border-animation {
     position: relative;
     border-radius: 2.5rem;
     padding: 2px;
     background: transparent !important;
-    transition: opacity 0.3s ease-in-out;
-    opacity: 1;
     overflow: visible;
   }
 
@@ -125,244 +119,91 @@
     pointer-events: none;
   }
 
-  /* Cadre doré générique si réutilisé ailleurs */
-  .golden-frame {
-    position: relative;
-    border-radius: 1.5rem;
-    padding: 2px;
-    background: transparent;
+  /* Texte doré */
+  .text-gradient-gold-warm {
+    background: linear-gradient(120deg, #D4AF37, #BFA57C, #A48B65);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
-  .golden-frame::before {
-    content: "";
+  /* Bouton doré animé */
+  .btn-golden-animated {
+    @apply bg-gradient-to-r from-[#C3A46D] to-[#B18E48] text-black font-bold rounded-full transition-all duration-300 ease-in-out;
+    @apply hover:shadow-lg hover:shadow-[#C3A46D]/50 hover:scale-105;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-golden-animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: all 650ms;
+  }
+
+  .btn-golden-animated:hover::before {
+    left: 100%;
+  }
+
+  /* Halo animé (bandeau d'annonce) */
+  .shimmer-effect {
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    padding: 2px;
-    background: linear-gradient(45deg, #D4AF37, #BFA57C, #A48B65) border-box;
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    z-index: 0;
-  }
-}
-
-/* Texte doré */
-.text-gradient-gold-warm {
-  background: linear-gradient(120deg, #D4AF37, #BFA57C, #A48B65);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Bouton doré animé */
-.btn-golden-animated {
-  @apply bg-gradient-to-r from-[#C3A46D] to-[#B18E48] text-black font-bold rounded-full transition-all duration-300 ease-in-out;
-  @apply hover:shadow-lg hover:shadow-[#C3A46D]/50 hover:scale-105;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-golden-animated::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: all 650ms;
-}
-
-.btn-golden-animated:hover::before {
-  left: 100%;
-}
-
-/* Halo animé du bandeau doré (AnnouncementBar) */
-.shimmer-effect {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(100deg,
+    pointer-events: none;
+    background: linear-gradient(100deg,
       rgba(255, 255, 255, 0) 0%,
       rgba(255, 255, 255, 0.35) 50%,
       rgba(255, 255, 255, 0) 100%);
-  transform: translateX(-100%);
-  animation: shimmer-sweep 3.2s linear infinite;
-  mix-blend-mode: screen;
-  opacity: 0.7;
+    transform: translateX(-100%);
+    animation: shimmer-sweep 3.2s linear infinite;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+  }
+
+  /* Sécurité z-index / overlay */
+  .logo-safe { position: relative; z-index: 70; }
+  .close-safe { position: relative; z-index: 70; }
+  .mobile-overlay { z-index: 70; }
+
 }
 
-/* Animations */
+/* === ANIMATIONS === */
 @keyframes snake-anim {
-  0% {
-    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-  }
-
-  25% {
-    clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
-  }
-
-  50% {
-    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%);
-  }
-
-  75% {
-    clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0);
-  }
-
-  100% {
-    clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%);
-  }
+  0% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
+  25% { clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%); }
+  50% { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 100%, 0 100%); }
+  75% { clip-path: polygon(100% 100%, 0 100%, 0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0); }
+  100% { clip-path: polygon(0 0, 0 0, 0 2px, 0 2px, 0 100%, 0 100%); }
 }
 
 @keyframes shimmer-sweep {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-/* === Header glass + spacing + rubber-band ================================== */
-:root{
-  --header-offset: 0px;   /* hauteur dynamique du header → padding top page */
-  --rb: 0px;              /* amplitude du petit rebond mobile */
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-/* Effet verre: doux en haut, plus lisible en scroll */
-.glass-header {
-  background: rgba(251, 249, 244, 0.52);              /* ton beige existant, + transparent */
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  backdrop-filter: blur(14px) saturate(120%);
-  border: 1px solid rgba(255,255,255,0.35);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-  transition: background-color .28s ease, box-shadow .28s ease, transform .2s ease;
-  transform: translateY(var(--rb));
-}
-
-/* En scroll: un peu plus opaque, toujours “liquid glass” */
-.glass-scrolled {
-  background: rgba(251, 243, 224, 0.92);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  backdrop-filter: blur(18px) saturate(130%);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-}
-
-/* Sécurité z-index pour logo et croix mobile (ne rien changer visuellement) */
-.logo-safe { position: relative; z-index: 60; }
-.close-safe { position: relative; z-index: 60; }
-
-/* Le menu mobile doit passer au-dessus de tout */
-.mobile-overlay { z-index: 70; }
-
-/* Option: petite zone “hit” pour s’assurer que la capsule capte bien les clics */
-.header-hit { pointer-events: auto; }
-.mobile-overlay {
-  z-index: 60;
-}
-
-.close-safe {
-  position: relative;
-  z-index: 70;
-}
-
-.logo-safe {
-  position: relative;
-  z-index: 70;
-}
-/* === Fix capsule / snake deco qui crée le "carré" et l'ombre === */
-.header-capsule {
-  background: transparent !important;
-  /* pas de bloc opaque */
-  box-shadow: none !important;
-  /* pas d'ombre de boîte */
-  border: none !important;
-}
-
-.snake-border-animation {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* Si tu veux garder une légère pastille crème SOUS les icônes,
-   fais-le sur le vrai contenu, pas sur le wrapper global */
-.header-content-wrapper {
-  background: rgba(255,255,255,0.32);
-  /* crème très léger */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 28px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  /* ombre douce, pas de "carré" */
-}
-/* Évite tout fond parasite et marge top implicite */
-html, body { background: #FBF9F4; }
-#site-header { background: transparent !important; }
-
-/* L'AnnouncementBar doit être flush en haut */
-.announcement-bar { margin: 0 !important; border: 0; background: #c79f54; } /* ou ta couleur actuelle */
-
-/* Supprime toute marge top du premier élément sous le header */
-main, .page-root, .routes-root { margin-top: 0 !important; }
-:root {
-  --header-offset: 0px;
-  --rb: 0px;
-}
-
-/* verre "permanent" */
+/* === HEADER GLASS FINAL === */
 .glass-header {
   background: rgba(255, 255, 255, 0.28) !important;
   backdrop-filter: saturate(1.2) blur(16px) !important;
   -webkit-backdrop-filter: saturate(1.2) blur(16px) !important;
   border: 1px solid rgba(255, 255, 255, 0.45) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(var(--rb));
 }
+.glass-header.glass-scrolled { background: rgba(255,255,255,0.28) !important; }
 
-/* au scroll on garde le même rendu (pas de beige) */
-.glass-header.glass-scrolled {
-  background: rgba(255, 255, 255, 0.28) !important;
-}
+/* Fond général + bar d’annonce */
+html, body { background: #FBF9F4; }
+#site-header { background: transparent !important; }
+.announcement-bar { margin: 0 !important; border: 0; background: #c79f54; }
 
-/* on neutralise les anciens fonds "crème" qui dessinaient un rectangle */
-.header-capsule,
-.header-capsule.scrolled,
-.snake-border-animation {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-/* s’assure que la “capsule” interne garde les arrondis et le verre */
-.header-capsule .header-content-wrapper {
-  background: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  border-radius: 2.25rem !important;
-}
-/* Empêche le margin-collapse du premier enfant (bande blanche fantôme) */
-.app-content {
-  display: flow-root;
-  /* crée un BFC = pas de collapse */
-  position: relative;
-}
-
-/* Sécurité : on annule un éventuel gros margin-top du 1er bloc */
-.app-content>*:first-child {
-  margin-top: 0 !important;
-}
-
-/* Quand il y a un hero (home/bougie), on n’ajoute pas d’espace de tête */
-.app-content.has-hero {
-  padding-top: 0 !important;
-}
-
-/* Optionnel : si une section “bleue” doit respirer, fais du padding et pas du margin */
-.section-top-pad {
-  padding-top: 1.25rem;
-  /* ex: 20px */
-}
+/* === BFC / MARGES === */
+.app-content { display: flow-root; position: relative; }
+.app-content > *:first-child { margin-top: 0 !important; }
+.app-content.has-hero { padding-top: 0 !important; }
+.section-top-pad { padding-top: 1.25rem; }

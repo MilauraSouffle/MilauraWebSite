@@ -19,6 +19,7 @@ const deaccent = (s = "") =>
   s.toString().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
 const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 const singular = (t) => (t.endsWith("s") ? t.slice(0, -1) : t);
+
 const categoryTokens = (name, slug) => {
   const base = deaccent(name);
   const baseSlug = deaccent(slug || "");
@@ -33,15 +34,18 @@ const categoryTokens = (name, slug) => {
     .map(deaccent)
     .filter(Boolean);
 };
+
 const CATEGORY_CATALOG = Object.entries(CATEGORY_REGISTRY).map(([id, meta]) => ({
   id,
   name: meta.name,
   slug: meta.slug,
   tokens: categoryTokens(meta.name, meta.slug),
 }));
+
 const collectProductHints = (p) => {
   const ids = new Set();
   const tokens = new Set();
+
   const pushStruct = (c) => {
     if (!c) return;
     const id = c?.id ?? c?.collection_id ?? c?.category_id;
@@ -50,29 +54,37 @@ const collectProductHints = (p) => {
     if (c?.slug) tokens.add(deaccent(c.slug));
     if (c?.handle) tokens.add(deaccent(c.handle));
   };
+
   toArray(p?.collections).forEach(pushStruct);
   toArray(p?.categories).forEach(pushStruct);
   toArray(p?.collection_ids).forEach((x) => ids.add(String(x)));
   toArray(p?.category_ids).forEach((x) => ids.add(String(x)));
+
   ["collection", "collection_name", "collection_slug", "category", "category_name", "category_slug"].forEach((k) => {
     const v = p?.[k];
     if (v) tokens.add(deaccent(v));
   });
+
   const m = p?.metadata || {};
   ["collection", "collection_name", "category", "category_name", "category_slug"].forEach((k) => {
     const v = m?.[k];
     if (v) tokens.add(deaccent(v));
   });
+
   const rawTags = p?.tags;
   if (typeof rawTags === "string") rawTags.split(",").forEach((t) => tokens.add(deaccent(t)));
   else if (Array.isArray(rawTags)) rawTags.forEach((t) => tokens.add(deaccent(t)));
+
   const maybeTitle = deaccent(p?.title || p?.name || "");
   const maybeSubtitle = deaccent(p?.subtitle || "");
   if (maybeTitle) tokens.add(maybeTitle);
   if (maybeSubtitle) tokens.add(maybeSubtitle);
+
   return { ids: [...ids], tokens: [...tokens] };
 };
+
 const fuzzyMatch = (a, b) => a === b || a.includes(b) || b.includes(a);
+
 function buildCategoryIndex(products) {
   const index = CATEGORY_CATALOG.map((c) => ({
     id: c.id,
@@ -83,10 +95,13 @@ function buildCategoryIndex(products) {
     cover: null,
   }));
   const byId = new Map(index.map((c) => [c.id, c]));
+
   for (const p of products) {
     const cover = p?.image || p?.images?.[0]?.src || p?.images?.[0]?.url || null;
     const { ids, tokens } = collectProductHints(p);
+
     let matched = false;
+
     for (const cid of ids) {
       const cell = byId.get(cid);
       if (cell) {
@@ -116,13 +131,20 @@ function Card({ item, active }) {
   return (
     <motion.div
       layout
-      className={`snap-center shrink-0 overflow-hidden rounded-3xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] ring-1 ring-black/5 bg-white/70 backdrop-blur-md
-                  w-[86vw] xs:w-[80vw] sm:w-[70vw] md:w-[46rem] lg:w-[34rem] xl:w-[30rem] 2xl:w-[32rem]
-                  aspect-[4/5] md:aspect-[16/10]`}
+      className={`
+        snap-center shrink-0 overflow-hidden rounded-3xl
+        shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] ring-1 ring-black/5
+        bg-white/70 backdrop-blur-md
+        /* largeur responsive “safe” */
+        w-[86vw] xs:w-[80vw] sm:w-[72vw]
+        md:w-[34rem] lg:w-[30rem] xl:w-[18rem] 2xl:w-[30rem]
+        /* ratio: on RESTE vertical aussi sur desktop pour respecter les visuels */
+        aspect-[4/5] md:aspect-[5/4]
+      `}
       animate={{
-        scale: active ? 1 : 0.95,
+        scale: active ? 1 : 0.96,
         y: active ? 0 : 4,
-        filter: active ? "brightness(1)" : "brightness(0.95)",
+        filter: active ? "brightness(1)" : "brightness(0.97)",
       }}
       transition={{ type: "spring", stiffness: 180, damping: 18 }}
     >
@@ -130,12 +152,17 @@ function Card({ item, active }) {
         to={`/collections/${item.slug}?categoryId=${encodeURIComponent(item.id)}`}
         className={`block h-full ${disabled ? "pointer-events-none opacity-60" : ""}`}
       >
-        <div className="relative h-[68%] md:h-[70%]">
+        {/* zone image : un peu plus haute, et object-contain sur desktop */}
+        <div className="relative h-[66%] md:h-[68%]">
           {item.cover ? (
             <img
               src={item.cover}
               alt={item.name}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="
+                absolute inset-0 h-full w-full
+                object-cover object-center
+                md:object-contain md:bg-[#F7F3EC]
+              "
               loading="lazy"
             />
           ) : (
@@ -143,16 +170,18 @@ function Card({ item, active }) {
               Aucune image
             </div>
           )}
+          {/* léger dégradé pour mieux fondre la cartouche */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "linear-gradient(to bottom, rgba(251,249,244,0) 40%, rgba(251,249,244,0.65) 80%, rgba(251,249,244,0.9) 100%)",
+                "linear-gradient(to bottom, rgba(251,249,244,0) 45%, rgba(251,249,244,0.65) 82%, rgba(251,249,244,0.95) 100%)",
             }}
           />
         </div>
 
-        <div className="h-[32%] md:h-[30%] p-5 flex flex-col justify-center bg-gradient-to-br from-[#E9CC8A] to-[#C3A46D]">
+        {/* cartouche titre */}
+        <div className="h-[34%] md:h-[32%] p-5 flex flex-col justify-center bg-gradient-to-br from-[#E9CC8A] to-[#C3A46D]">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black leading-snug">
             {item.name}
           </h3>
@@ -228,7 +257,7 @@ export default function CollectionsCarousel() {
   const dots = useMemo(() => items.map((_, i) => i), [items]);
 
   return (
-    <section className="py-10 md:py-12 bg-[#FBF9F4]">
+    <section className="pt-2 md:pt-4 pb-8 md:pb-10 bg-[#FBF9F4]">
       <div className="container mx-auto px-4">
         <motion.h2
           className="text-5xl font-script font-bold text-gradient-gold-warm text-center mb-3"
@@ -251,10 +280,7 @@ export default function CollectionsCarousel() {
         </motion.p>
 
         <div className="relative">
-          {/* Track centré + largeur max pour éviter l’effet “trop grand” */}
-          <div
-            className="mx-auto max-w-[1200px]"
-          >
+          <div className="mx-auto max-w-[1200px]">
             <div
               ref={trackRef}
               className="flex gap-5 md:gap-4 lg:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4
@@ -268,13 +294,13 @@ export default function CollectionsCarousel() {
             </div>
           </div>
 
-          {/* commandes */}
+          {/* commandes desktop */}
           <div className="mt-5 md:mt-6 flex items-center justify-center gap-5">
             <button
               type="button"
               onClick={() => scrollByCards(-1)}
               aria-label="Précédent"
-              className="grid place-items-center h-10 w-10 md:h-9 md:w-9 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+              className="hidden md:grid place-items-center h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
             >
               ‹
             </button>
@@ -294,7 +320,7 @@ export default function CollectionsCarousel() {
               type="button"
               onClick={() => scrollByCards(+1)}
               aria-label="Suivant"
-              className="grid place-items-center h-10 w-10 md:h-9 md:w-9 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+              className="hidden md:grid place-items-center h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
             >
               ›
             </button>

@@ -254,9 +254,13 @@ const Header = ({ onCartClick, cartItemCount }) => {
                 </ul>
               </nav>
 
-              {/* Icônes + burger mobile */}
-              <div className="flex items-center gap-1.5 md:gap-2">
+              {/* Icônes desktop uniquement */}
+              <div className="hidden lg:flex items-center gap-1.5 md:gap-2">
                 <ActionIcons onCartClick={onCartClick} cartItemCount={cartItemCount} />
+              </div>
+
+              {/* Burger mobile uniquement */}
+              <div className="flex lg:hidden items-center gap-1.5 md:gap-2">
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   aria-label="Ouvrir le menu"
