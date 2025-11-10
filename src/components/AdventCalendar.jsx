@@ -1,201 +1,332 @@
-import React, { useState, useRef } from 'react';
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useTransform,
-  useReducedMotion,
-} from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import Snowfall from '@/components/Snowfall';
+// src/components/CollectionsCarousel.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { getProducts } from "@/api/EcommerceApi";
 
-const AnimatedButtonText = ({ text }) => {
-  const letters = Array.from(text);
-  const container = {
-    hidden: { opacity: 0 },
-    visible: (i = 1) => ({
-      opacity: 1,
-      transition: { staggerChildren: 0.04, delayChildren: 0.04 * i },
-    }),
-  };
-  const child = {
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: 'spring', damping: 12, stiffness: 100 },
-    },
-    hidden: {
-      opacity: 0,
-      y: 10,
-      transition: { type: 'spring', damping: 12, stiffness: 100 },
-    },
-  };
-  return (
-    <motion.div
-      className="flex justify-center items-center overflow-hidden"
-      variants={container}
-      initial="hidden"
-      animate="visible"
-    >
-      {letters.map((letter, index) => (
-        <motion.span variants={child} key={`${letter}-${index}`}>
-          {letter === ' ' ? '\u00A0' : letter}
-        </motion.span>
-      ))}
-    </motion.div>
-  );
+/* ---------- registre catégories (slugs alignés) ---------- */
+const CATEGORY_REGISTRY = {
+  pcol_01K88QVKKZN29HYFBYXRAV0106: { name: "Bijoux énergétiques", slug: "bijoux-energetiques" },
+  pcol_01K88X47XDD86DGRCST06ZRFP4: { name: "Bougie émotionnelle", slug: "bougie-emotionnelle" },
+  pcol_01K88QSKEZQ9032VE7PBEWG0GH: { name: "Calendrier de l'Avent", slug: "calendrier-de-lavent" },
+  pcol_01K88QWACTFF883B79X179MZ28: { name: "Objets de lithothérapie", slug: "objets-de-lithotherapie" },
+  pcol_01K88QVYP8QVQ95HSSKMD9KHZC: { name: "Pierres & Minéraux", slug: "pierres-mineraux" },
+  pcol_01K88QVC9Q913Y15SCX4NC004D: { name: "Rituels & Bien-être", slug: "rituels-bien-etre" },
 };
 
-const AdventCalendar = () => {
-  const [isHovered, setIsHovered] = useState(false);
-  const buttonText = 'Découvrir nos calendriers ✨';
+/* ---------- helpers d’indexation produits → catégories ---------- */
+const deaccent = (s = "") =>
+  s.toString().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+const singular = (t) => (t.endsWith("s") ? t.slice(0, -1) : t);
 
-  // URLs image: principale (Horizons) + fallback (ImageKit)
-  const PRIMARY_IMG =
-    'https://horizons-cdn.hostinger.com/5ed1deb4-535d-4bff-8341-dc46a5456047/dcaf1866d5d96b64407e02f0360ea810.png';
-  const FALLBACK_IMG =
-    'https://ik.imagekit.io/bupjuxqi6/milaura-calendrier.jpg';
+const categoryTokens = (name, slug) => {
+  const base = deaccent(name);
+  const baseSlug = deaccent(slug || "");
+  const andAmp = base.replace(" et ", " & ");
+  const andWord = base.replace(" & ", " et ");
+  const noAmp = base.replace("&", "et");
+  const onlyWords = base.replace(/[&]/g, " ").replace(/\s+/g, " ").trim();
+  const words = onlyWords.split(" ").filter(Boolean);
+  const singles = words.map(singular);
+  const pieces = [...new Set([...words, ...singles])];
+  return [base, baseSlug, andAmp, andWord, noAmp, onlyWords, ...pieces]
+    .map(deaccent)
+    .filter(Boolean);
+};
 
-  const [imgSrc, setImgSrc] = useState(PRIMARY_IMG);
-  const [loaded, setLoaded] = useState(false);
+const CATEGORY_CATALOG = Object.entries(CATEGORY_REGISTRY).map(([id, meta]) => ({
+  id,
+  name: meta.name,
+  slug: meta.slug,
+  tokens: categoryTokens(meta.name, meta.slug),
+}));
 
-  const targetRef = useRef(null);
-  const prefersReducedMotion = useReducedMotion();
+const collectProductHints = (p) => {
+  const ids = new Set();
+  const tokens = new Set();
 
-  // Parallax doux sur le fond
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ['start end', 'end start'],
+  const pushStruct = (c) => {
+    if (!c) return;
+    const id = c?.id ?? c?.collection_id ?? c?.category_id;
+    if (id) ids.add(String(id));
+    if (c?.name) tokens.add(deaccent(c.name));
+    if (c?.slug) tokens.add(deaccent(c.slug));
+    if (c?.handle) tokens.add(deaccent(c.handle));
+  };
+
+  toArray(p?.collections).forEach(pushStruct);
+  toArray(p?.categories).forEach(pushStruct);
+  toArray(p?.collection_ids).forEach((x) => ids.add(String(x)));
+  toArray(p?.category_ids).forEach((x) => ids.add(String(x)));
+
+  ["collection", "collection_name", "collection_slug", "category", "category_name", "category_slug"].forEach((k) => {
+    const v = p?.[k];
+    if (v) tokens.add(deaccent(v));
   });
-  const bgY = useTransform(scrollYProgress, [0, 1], [-18, 18]);
-  const safeBgY = prefersReducedMotion ? 0 : bgY;
 
-  // Dégradé bleu > crème
-  const gradient =
-    'linear-gradient(180deg,#cfe2f3 0%,#e7f0fb 35%,#fbf9f4 100%)';
+  const m = p?.metadata || {};
+  ["collection", "collection_name", "category", "category_name", "category_slug"].forEach((k) => {
+    const v = m?.[k];
+    if (v) tokens.add(deaccent(v));
+  });
 
-  // Bloc image (réutilisé desktop & mobile)
-  const ImageCard = (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98, y: 6 }}
-      whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.55 }}
-      className="rounded-3xl bg-white/85 shadow-[0_20px_60px_rgba(0,0,0,0.12)] ring-1 ring-black/5 p-3"
-    >
-      <div className="relative rounded-2xl overflow-hidden">
-        {/* skeleton */}
-        <AnimatePresence>
-          {!loaded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-gray-100/70 animate-pulse"
-            />
-          )}
-        </AnimatePresence>
+  const rawTags = p?.tags;
+  if (typeof rawTags === "string") rawTags.split(",").forEach((t) => tokens.add(deaccent(t)));
+  else if (Array.isArray(rawTags)) rawTags.forEach((t) => tokens.add(deaccent(t)));
 
-        <img
-          src={imgSrc}
-          alt="Calendrier de l'Avent minéral Mil’Aura"
-          className="w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setLoaded(true)}
-          onError={() => {
-            // bascule vers le fallback si la principale échoue
-            if (imgSrc !== FALLBACK_IMG) {
-              setImgSrc(FALLBACK_IMG);
-              setLoaded(false);
-            }
-          }}
-        />
-      </div>
-    </motion.div>
-  );
+  const maybeTitle = deaccent(p?.title || p?.name || "");
+  const maybeSubtitle = deaccent(p?.subtitle || "");
+  if (maybeTitle) tokens.add(maybeTitle);
+  if (maybeSubtitle) tokens.add(maybeSubtitle);
+
+  return { ids: [...ids], tokens: [...tokens] };
+};
+
+const fuzzyMatch = (a, b) => a === b || a.includes(b) || b.includes(a);
+
+function buildCategoryIndex(products) {
+  const index = CATEGORY_CATALOG.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    tokens: c.tokens,
+    count: 0,
+    cover: null,
+  }));
+  const byId = new Map(index.map((c) => [c.id, c]));
+
+  for (const p of products) {
+    const cover = p?.image || p?.images?.[0]?.src || p?.images?.[0]?.url || null;
+    const { ids, tokens } = collectProductHints(p);
+
+    let matched = false;
+
+    for (const cid of ids) {
+      const cell = byId.get(cid);
+      if (cell) {
+        matched = true;
+        cell.count += 1;
+        if (!cell.cover && cover) cell.cover = cover;
+      }
+    }
+    if (!matched && tokens.length) {
+      for (const cell of index) {
+        const hit = tokens.some((t) => cell.tokens.some((ct) => fuzzyMatch(t, ct)));
+        if (hit) {
+          cell.count += 1;
+          if (!cell.cover && cover) cell.cover = cover;
+          matched = true;
+        }
+      }
+    }
+  }
+  return index;
+}
+
+/* ---------- carte ---------- */
+function Card({ item, active }) {
+  const disabled = item.count === 0;
 
   return (
-    <section
-      ref={targetRef}
-      id="advent-calendar"
-      className="relative flex items-center justify-center min-h-[82vh] md:min-h-[88vh] py-14 md:py-20 overflow-hidden"
+    <motion.div
+      layout
+      className={`
+        snap-center shrink-0 overflow-hidden rounded-3xl
+        shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] ring-1 ring-black/5
+        bg-white/70 backdrop-blur-md
+        /* largeur responsive “safe” */
+        w-[86vw] xs:w-[80vw] sm:w-[72vw]
+        md:w-[34rem] lg:w-[30rem] xl:w-[18rem] 2xl:w-[30rem]
+        /* ratio: on RESTE vertical aussi sur desktop pour respecter les visuels */
+        aspect-[4/5] md:aspect-[5/4]
+      `}
+      animate={{
+        scale: active ? 1 : 0.96,
+        y: active ? 0 : 4,
+        filter: active ? "brightness(1)" : "brightness(0.97)",
+      }}
+      transition={{ type: "spring", stiffness: 180, damping: 18 }}
     >
-      {/* Fond + parallax */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-0 will-change-transform"
-        style={{ background: gradient, y: safeBgY }}
-      />
+      <Link
+        to={`/collections/${item.slug}?categoryId=${encodeURIComponent(item.id)}`}
+        className={`block h-full ${disabled ? "pointer-events-none opacity-60" : ""}`}
+      >
+        {/* zone image : un peu plus haute, et object-contain sur desktop */}
+        <div className="relative h-[66%] md:h-[68%]">
+          {item.cover ? (
+            <img
+              src={item.cover}
+              alt={item.name}
+              className="
+                absolute inset-0 h-full w-full
+                object-cover object-center
+                md:object-contain md:bg-[#F7F3EC]
+              "
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-gray-300 text-sm">
+              Aucune image
+            </div>
+          )}
+          {/* léger dégradé pour mieux fondre la cartouche */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(251,249,244,0) 45%, rgba(251,249,244,0.65) 82%, rgba(251,249,244,0.95) 100%)",
+            }}
+          />
+        </div>
 
-      {/* Neige */}
-      <div className="absolute inset-0">
-        <Snowfall />
-      </div>
+        {/* cartouche titre */}
+        <div className="h-[34%] md:h-[32%] p-5 flex flex-col justify-center bg-gradient-to-br from-[#E9CC8A] to-[#C3A46D]">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black leading-snug">
+            {item.name}
+          </h3>
+          <p className="text-sm md:text-base text-black/80 mt-1">
+            {item.count} article{item.count > 1 ? "s" : ""}
+          </p>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
-      {/* Contenu */}
-      <div className="relative z-10 container mx-auto px-4">
-        <motion.div
-          className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center"
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+/* ---------- carrousel scroll-snap ---------- */
+export default function CollectionsCarousel() {
+  const [items, setItems] = useState([]);
+  const [active, setActive] = useState(0);
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const res = await getProducts({ limit: 250 });
+      const all = res?.products || res?.items || [];
+      const index = buildCategoryIndex(all);
+      if (!alive) return;
+      setItems(index);
+      if (index.length) {
+        const mid = Math.floor(index.length / 2);
+        setActive(mid);
+        requestAnimationFrame(() => {
+          try {
+            const node = trackRef.current?.children?.[mid];
+            node?.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+          } catch {}
+        });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const wrap = trackRef.current;
+    if (!wrap) return;
+    const onScroll = () => {
+      if (!wrap.children.length) return;
+      let best = 0;
+      let bestDist = Infinity;
+      const center = wrap.scrollLeft + wrap.clientWidth / 2;
+      Array.from(wrap.children).forEach((el, i) => {
+        const rectLeft = el.offsetLeft + el.clientWidth / 2;
+        const dist = Math.abs(rectLeft - center);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      });
+      setActive(best);
+    };
+    wrap.addEventListener("scroll", onScroll, { passive: true });
+    return () => wrap.removeEventListener("scroll", onScroll);
+  }, [items.length]);
+
+  const scrollByCards = (dir) => {
+    const wrap = trackRef.current;
+    if (!wrap) return;
+    const child = wrap.children?.[active];
+    const w = child ? child.clientWidth : wrap.clientWidth * 0.8;
+    wrap.scrollBy({ left: dir * (w + 24), behavior: "smooth" });
+  };
+
+  const dots = useMemo(() => items.map((_, i) => i), [items]);
+
+  return (
+    <section className="pt-2 md:pt-4 pb-8 md:pb-10 bg-[#FBF9F4]">
+      <div className="container mx-auto px-4">
+        <motion.h2
+          className="text-5xl font-script font-bold text-gradient-gold-warm text-center mb-3"
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
-          {/* Colonne texte */}
-          <div className="max-w-xl">
-            <p className="text-base md:text-lg text-amber-700/80 mb-2">
-              ✨ L’avent devient un rituel
-            </p>
-            <h2 className="text-4xl md:text-5xl font-script text-gradient-gold-warm drop-shadow-[0_2px_12px_rgba(0,0,0,0.25)]">
-              La Magie de l’Avent, Révélée
-            </h2>
-            <p className="text-base md:text-lg text-black/70 mt-4">
-              L'attente de Noël n'a jamais été aussi précieuse. Derrière chaque
-              porte se cache un trésor de la Terre, une invitation à 24 jours de
-              découvertes magiques.
-            </p>
+          Nos Collections
+        </motion.h2>
 
-            {/* IMAGE sur mobile: entre texte et CTA */}
-            <div className="mt-6 md:hidden">{ImageCard}</div>
+        <motion.p
+          className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-6 md:mb-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
+        >
+          Explorez nos univers et trouvez les créations qui résonnent avec votre âme.
+        </motion.p>
 
-            {/* CTA (mobile sous l'image, desktop à droite) */}
+        <div className="relative">
+          <div className="mx-auto max-w-[1200px]">
             <div
-              className="mt-6"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              ref={trackRef}
+              className="flex gap-5 md:gap-4 lg:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4
+                         [scrollbar-width:none] [-ms-overflow-style:none]"
+              style={{ scrollPaddingInline: "12px" }}
             >
-              <Link
-                to="/collections/calendrier-de-lavent"
-                aria-label="Découvrir nos calendriers de l'Avent"
-                data-analytics="cta_click_advent_home"
-              >
-                <Button size="lg" className="btn-golden-animated w-full md:w-auto">
-                  <AnimatePresence mode="wait">
-                    {isHovered ? (
-                      <AnimatedButtonText text={buttonText} />
-                    ) : (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        {buttonText}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </Link>
+              <style>{`.snap-x::-webkit-scrollbar{ display:none; }`}</style>
+              {items.map((it, i) => (
+                <Card key={it.id} item={it} active={i === active} />
+              ))}
             </div>
           </div>
 
-          {/* IMAGE desktop (cachée sur mobile) */}
-          <div className="hidden md:block">{ImageCard}</div>
-        </motion.div>
+          {/* commandes desktop */}
+          <div className="mt-5 md:mt-6 flex items-center justify-center gap-5">
+            <button
+              type="button"
+              onClick={() => scrollByCards(-1)}
+              aria-label="Précédent"
+              className="hidden md:grid place-items-center h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+            >
+              ‹
+            </button>
+
+            <div className="flex items-center gap-2">
+              {dots.map((i) => (
+                <span
+                  key={i}
+                  className={`rounded-full transition-all ${
+                    i === active ? "w-5 h-1.5 bg-gray-800" : "w-2 h-1.5 bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollByCards(+1)}
+              aria-label="Suivant"
+              className="hidden md:grid place-items-center h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow ring-1 ring-black/5"
+            >
+              ›
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
-};
-
-export default AdventCalendar;
+}

@@ -33,7 +33,6 @@ import AuthPage from '@/pages/AuthPage';
 /* Scroll manager robuste                                              */
 /* ------------------------------------------------------------------ */
 function scrollTopNow() {
-  // reset total (tous navigateurs)
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
@@ -43,19 +42,15 @@ function ScrollManager() {
   const { pathname, hash } = useLocation();
   const firstRenderRef = useRef(true);
 
-  // Désactive la restauration native le plus tôt possible
   useLayoutEffect(() => {
     if ('scrollRestoration' in window.history) {
-      try { window.history.scrollRestoration = 'manual'; } catch (_) {}
+      try { window.history.scrollRestoration = 'manual'; } catch (_) { }
     }
   }, []);
 
-  // Corrige le bfcache (pageshow) qui peut ré-afficher à l’ancienne position
   useEffect(() => {
     const onPageShow = (e) => {
-      // si la page vient du cache, on impose le top
       if (e.persisted) {
-        // petite raf pour être sûr de passer après la restau
         requestAnimationFrame(scrollTopNow);
         setTimeout(scrollTopNow, 60);
       }
@@ -64,17 +59,13 @@ function ScrollManager() {
     return () => window.removeEventListener('pageshow', onPageShow);
   }, []);
 
-  // Navigation sans hash → remonte en haut
   useEffect(() => {
     if (hash) return;
 
-    // forcer tout de suite (avant que d’autres effets ne scrollent)
     scrollTopNow();
-    // double sécurité après paint
     requestAnimationFrame(scrollTopNow);
     const t = setTimeout(scrollTopNow, 80);
 
-    // Premier affichage de la HOME: on insiste encore (iOS lenteur images)
     if (pathname === '/') {
       const onLoad = () => scrollTopNow();
       window.addEventListener('load', onLoad, { once: true });
@@ -91,7 +82,6 @@ function ScrollManager() {
     return () => clearTimeout(t);
   }, [pathname, hash]);
 
-  // Navigation avec hash → scroll à l’ancre en tenant compte du header
   useEffect(() => {
     if (!hash) return;
     const scrollToHash = () => {
@@ -107,7 +97,6 @@ function ScrollManager() {
     return () => clearTimeout(t);
   }, [pathname, hash]);
 
-  // Assure que le tout premier rendu de la home démarre bien en haut
   useLayoutEffect(() => {
     if (firstRenderRef.current && pathname === '/') {
       firstRenderRef.current = false;
@@ -127,7 +116,7 @@ function App() {
   const { user, loading } = useAuth();
 
   const shouldShowHeaderFooter = location.pathname !== '/lien';
-  const hasNoTopPadding = location.pathname === '/';
+  const isHomePage = location.pathname === '/';
 
   return (
     <>
@@ -136,7 +125,6 @@ function App() {
 
         {shouldShowHeaderFooter && (
           <div id="site-header" className="fixed top-0 left-0 w-full z-50 bg-transparent">
-            {/* on peut masquer la barre d’annonce sur mobile si besoin d’espace */}
             <div className="hidden sm:block">
               <AnnouncementBar />
             </div>
@@ -147,12 +135,13 @@ function App() {
           </div>
         )}
 
-        {/* wrapper contenu : la page commence SOUS le header (offset réel + safe-area iOS) */}
+        {/* wrapper contenu : sur la home pas de padding-top (le Hero gère l’offset),
+           sur les autres pages on garde l’offset réel + safe-area iOS */}
         <main
           id="app-content"
-          className="app-content"
+          className={`app-content ${isHomePage ? 'has-hero' : ''}`}
           style={{
-            paddingTop: hasNoTopPadding
+            paddingTop: isHomePage
               ? '0px'
               : 'calc(var(--header-offset) + env(safe-area-inset-top, 0px))',
           }}
